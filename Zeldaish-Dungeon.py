@@ -6,7 +6,7 @@ the user is facing and is meant to stop at where the block reaches the edges of 
 an enemy.
 """
 class fireball():
-
+    print('hi')
     def __init__(self, direction, row, col):
         self.direction = direction
         self.row = row
