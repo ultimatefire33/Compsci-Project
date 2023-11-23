@@ -1,19 +1,26 @@
 from cmu_graphics import *
 
 """
-This class is a move for the user. The move is meant to be a 1x1 red block which goes in the direction of where 
-the user is facing and is meant to stop at where the block reaches the edges of the screen or where the block hits
-an enemy.
+This is the main character class
 """
-class fireball():
-    print('hi')
-    def __init__(self, direction, row, col):
-        self.direction = direction
-        self.row = row
-        self.col = col
-        self.projColor = "red"
-        self.projPiece = [[True]]
-    
+class Character:
+    def __init__(self):
+        self.health = 5
+        self.speed = 3
+        self.height = 20
+        self.width = 20
+        self.cx = 100
+        self.cy = 100
+        self.cdx = 0
+        self.cdy = 0
+        self.charMoving = False
+
+    def drawCharacter(self):
+        drawRect(self.cx, self.cy, self.width, self.height, fill = "blue", align = "center")
+
+    def changePosition(self):
+        self.cx += self.cdx
+        self.cy += self.cdy
 
 """
 onAppStart sets the amount of rows and cols for the board, it also gets the left of the border of the board in pixels
@@ -21,137 +28,100 @@ and gets the top edge of the border in pixels to set the border in place. It als
 in pixels. It sets the board in a 2d list filled currently with None values. As of now we also have the loadCharacter(app).
 """
 def onAppStart(app):
-    app.stepsPerSecond = 2
-    app.rows = 15
-    app.cols = 15
+    app.stepsPerSecond = 30
     app.boardLeft = 25
     app.boardTop = 50
     app.boardWidth = 450
     app.boardHeight = 400
-    app.cellBorderWidth = 2
+    app.borderWidth = 5
     app.direction = None
-    app.board = [([None] * app.cols) for row in range(app.rows)]
-    loadCharacter(app)
+    app.user = Character()
+
+"""
+This keeps track of all timed events and movement of main character and npcs
+"""
+def onStep(app):
+    if isLegal(app, app.user):
+        app.user.changePosition()
+
+"""
+This checks if a move for an npc or the user is legal, can also apply to moves
+"""
+def isLegal(app, character):
+    if character.cx + character.cdx + character.width//2 + app.borderWidth/2 > app.boardWidth + app.boardLeft:
+        return False
+    if character.cy + character.cdy + character.height//2 + app.borderWidth/2 > app.boardHeight + app.boardTop:
+        return False
+    if character.cx - character.width//2  + character.cdx - app.borderWidth/2 < app.boardLeft:
+        return False
+    if character.cy - character.height//2 + character.cdy - app.borderWidth/2 < app.boardTop:
+        return False
+    return True
 
 """
 This basically gives all the moves of the character and allows for extra stuff during different phrases of the program.
 I will add those phases later.
 """
-def onKeyPress(app, key):
-    if key == 'left':
-        movePiece(app, -1, 0)
-        app.direction = "left"
-    elif key == 'down':
-        movePiece(app, 0, 1)
-        app.direction = "down"
-    elif key == 'right':
-        movePiece(app, 1, 0)
-        app.direction = "right"
-    elif key == 'up':
-        movePiece(app, 0, -1)
-        app.direction = "up"
-    elif key == 'f':
-        app.projFire = True
+def onKeyHold(app, keys):
+    if len(keys) == 2:
+        if 'a' in keys and 's' in keys:
+            app.user.cdx = -app.user.speed
+            app.user.cdy = app.user.speed
+        elif 's' in keys and 'd' in keys:
+            app.user.cdx = app.user.speed
+            app.user.cdy = app.user.speed
+        elif 'w' in keys and 'd' in keys:
+            app.user.cdx = app.user.speed
+            app.user.cdy = -app.user.speed
+        elif 'a' in keys and 'w' in keys:
+            app.user.cdx = -app.user.speed
+            app.user.cdy = -app.user.speed
+        elif 'a' in keys and 'd' in keys:
+            app.user.cdx = 0
+            app.user.cdy = 0
+        elif 'w' in keys and 's' in keys:
+            app.user.cdx = 0 
+            app.user.cdy = 0
+    elif len(keys) == 1:
+        if 'a' in keys:
+            app.user.cdx = -app.user.speed
+            app.user.cdy = 0
+        elif 's' in keys:
+            app.user.cdy = app.user.speed
+            app.user.cdx = 0
+        elif 'd' in keys:
+            app.user.cdx = app.user.speed
+            app.user.cdy = 0
+        elif 'w' in keys:
+            app.user.cdy = -app.user.speed
+            app.user.cdx = 0
 
 """
-Changes the row and column of the character based on the key press and
-checks if it interferes with the border edges.
+When the key is released the movement in the direction of that key is 0 now.
 """
-def movePiece(app, dcol, drow):
-    app.pieceRow += drow
-    app.pieceCol += dcol
-    if pieceIsLegal(app, app.piece, app.pieceRow, app.pieceCol):
-        return True
-    else:
-        app.pieceRow -= drow
-        app.pieceCol -= dcol
-        return False
-
-"""
-This checks if the piece given is legally within the board, or if it interacts with another block.
-"""
-def pieceIsLegal(app, piece, row, col):
-    if row + len(piece) > app.rows:
-        return False
-    if col + len(piece[0]) > app.cols:
-        return False
-    if col < 0:
-        return False
-    if row < 0:
-        return False
-    for i in range(len(piece)):
-        for j in range(len(piece[0])):
-            if app.board[row + i][col + j] != None and app.piece[i][j] == True:
-                return False
-    return True
-
-"""
-Gets each cell width from the board width (in pixels) divided by the total columns.
-Gets each cell height from the board height (in pixels) divided by the total rows.
-"""
-def getCellSize(app):
-    cellWidth = app.boardWidth / app.cols
-    cellHeight = app.boardHeight / app.rows
-    return (cellWidth, cellHeight)
-
-"""
-Makes each cell size from the getCellSize(app) function.
-It will get the cellLeft from the left edge of the board in addition with the column we are on times the cell width.
-It will get the cellTop from the top edge of the board in addition with the row of the board we are on times each cell height.
-"""
-def getCellLeftTop(app, row, col):
-    cellWidth, cellHeight = getCellSize(app)
-    cellLeft = app.boardLeft + col * cellWidth
-    cellTop = app.boardTop + row * cellHeight
-    return (cellLeft, cellTop)
-
-"""
-Loads the character with an initial row, column, color, and the 2d list of the piece. (As of right now it is just a 1x1 piece, may change later)
-"""
-def loadCharacter(app):
-    app.pieceRow = 7
-    app.pieceCol = 7
-    app.pieceColor = 'green'
-    app.piece = [[True]]
+def onKeyRelease(app, key):
+    if key == 'a':
+       app.user.cdx = 0
+    if key == 's':
+        app.user.cdy = 0
+    if key == 'd':
+        app.user.cdx = 0
+    if key == 'w':
+        app.user.cdy = 0
 
 """
 Draw the board outline (with double-thickness)
 """
+
 def drawBoardBorder(app):
   drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
-           fill=None, border='black',
-           borderWidth=2*app.cellBorderWidth)
-
-"""
-Draws each cell on the board using the getCellLeftTop function given the row and col the drawCell is given. It then uses the drawRect
-function to draw the 'cell'/ rectangle.
-"""
-def drawCell(app, row, col, color):
-    cellLeft, cellTop = getCellLeftTop(app, row, col)
-    cellWidth, cellHeight = getCellSize(app)
-    drawRect(cellLeft, cellTop, cellWidth, cellHeight,
-             fill=color, border='black',
-             borderWidth=app.cellBorderWidth)
-
-"Draws the boarder using the drawCell function and going through each row and column."    
-def drawBoard(app):
-    for row in range(app.rows):
-        for col in range(app.cols):
-            drawCell(app, row, col, app.board[row][col])
-
-"Draws each piece/character on the board."   
-def drawPiece(app):
-    numRows = len(app.piece)
-    numCols = len(app.piece[0])
-    for i in range(numRows):
-        for j in range(numCols):
-            if app.piece[i][j] == True:
-                drawCell(app, app.pieceRow + i, app.pieceCol + j, app.pieceColor)  
-
+           fill=None, border='black', borderWidth = app.borderWidth)
+  
+  
 def redrawAll(app):
-    drawBoard(app)
-    drawBoardBorder(app)  
-    drawPiece(app)
+    drawBoardBorder(app)
+    drawLabel(f"{app.user.cx} cx", 20, 10) 
+    app.user.drawCharacter()
 
 def main():
     runApp(width = 500, height = 500)
