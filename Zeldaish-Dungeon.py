@@ -1,4 +1,46 @@
 from cmu_graphics import *
+import math
+
+"""
+This is the main projectile that the user uses, used when 'f' is pressed
+"""
+class Fireball:
+    def __init__(self, cx, cy, cdx, cdy):
+        self.speed = 5
+        self.radius = 5
+        self.cdx , self.cdy = self.getDirection(cdx, cdy) 
+        self.cdx = self.cdx * self.speed
+        self.cdy = self.cdy * self.speed
+        self.cx = cx + self.cdx
+        self.cy = cy + self.cdy
+        self.width = self.radius
+        self.height = self.radius
+    
+    def drawFireball(self):
+        drawCircle(self.cx, self.cy, self.radius, fill = "red")
+
+    def changeFireballPos(self):
+        self.cx += self.cdx
+        self.cy += self.cdy
+    
+    def getDirection(self, cdx, cdy):
+        if cdx > 0 and cdy > 0:
+            return 1, 1
+        elif cdx > 0 and cdy == 0:
+            return 1, 0
+        elif cdx > 0 and cdy < 0:
+            return 1, -1
+        elif cdx == 0 and cdy > 0:
+            return 0, 1
+        elif cdx == 0 and cdy < 0:
+            return 0, -1
+        elif cdx < 0 and cdy > 0:
+            return -1, 1
+        elif cdx < 0 and cdy == 0:
+            return -1, 0
+        else:
+            return -1, -1
+
 
 """
 This is the main character class
@@ -14,6 +56,7 @@ class Character:
         self.cdx = 0
         self.cdy = 0
         self.charMoving = False
+        self.fireballs = []
 
     def drawCharacter(self):
         drawRect(self.cx, self.cy, self.width, self.height, fill = "blue", align = "center")
@@ -22,10 +65,40 @@ class Character:
         self.cx += self.cdx
         self.cy += self.cdy
 
+    def createFireball(self):
+        if len(self.fireballs) < 3 and self.ifBothZero() == False:
+            newFireball = Fireball(self.cx, self.cy, self.cdx, self.cdy)
+            self.fireballs.append(newFireball)
+
+    def ifBothZero(self):
+        if self.cdx == 0 and self.cdy == 0:
+            return True
+        return False
+    
+class EnemyDog:
+    def __init__(self):
+        self.health = 3
+        self.cx = None
+        self.cy = None
+        self.cdx = 0
+        self.cdy = 0
+        self.height = 20
+        self.width = 20
+    
+    def drawCharacter(self):
+        drawRect(self.cx, self.cy, self.width, self.height, fill = "black", align = "center")
+
+    def changePosition(self):
+        self.cx += self.cdx
+        self.cy += self.cdy
+
+
+
+
+
+
 """
-onAppStart sets the amount of rows and cols for the board, it also gets the left of the border of the board in pixels
-and gets the top edge of the border in pixels to set the border in place. It also sets the boardWidth and boardHeight of the board 
-in pixels. It sets the board in a 2d list filled currently with None values. As of now we also have the loadCharacter(app).
+onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
     app.stepsPerSecond = 30
@@ -35,14 +108,30 @@ def onAppStart(app):
     app.boardHeight = 400
     app.borderWidth = 5
     app.direction = None
+    app.globalCounter = 0
+    app.fireCounter = 30
     app.user = Character()
+    app.timerCounter = 0
+    app.fireballShot = False
 
 """
-This keeps track of all timed events and movement of main character and npcs
+This keeps track of all timed events and movement of main character, npcs, and 
+projectiles
 """
 def onStep(app):
+    app.timerCounter += 1
+    if app.timerCounter % 15 == 0:
+        app.timerCounter = 0
+        app.fireballShot = False
+
     if isLegal(app, app.user):
         app.user.changePosition()
+
+    for fireball in app.user.fireballs:
+        if isLegal(app, fireball):
+            fireball.changeFireballPos()  
+        else:
+            app.user.fireballs.remove(fireball) 
 
 """
 This checks if a move for an npc or the user is legal, can also apply to moves
@@ -63,7 +152,7 @@ This basically gives all the moves of the character and allows for extra stuff d
 I will add those phases later.
 """
 def onKeyHold(app, keys):
-    if len(keys) == 2:
+    if len(keys) >= 2:
         if 'a' in keys and 's' in keys:
             app.user.cdx = -app.user.speed
             app.user.cdy = app.user.speed
@@ -82,6 +171,7 @@ def onKeyHold(app, keys):
         elif 'w' in keys and 's' in keys:
             app.user.cdx = 0 
             app.user.cdy = 0
+
     elif len(keys) == 1:
         if 'a' in keys:
             app.user.cdx = -app.user.speed
@@ -95,6 +185,10 @@ def onKeyHold(app, keys):
         elif 'w' in keys:
             app.user.cdy = -app.user.speed
             app.user.cdx = 0
+    if 'f' in keys:
+        if app.fireballShot == False:
+            app.user.createFireball()
+            app.fireballShot = True
 
 """
 When the key is released the movement in the direction of that key is 0 now.
@@ -122,6 +216,8 @@ def redrawAll(app):
     drawBoardBorder(app)
     drawLabel(f"{app.user.cx} cx", 20, 10) 
     app.user.drawCharacter()
+    for fireball in app.user.fireballs:
+        fireball.drawFireball()
 
 def main():
     runApp(width = 500, height = 500)
