@@ -2,9 +2,9 @@ from cmu_graphics import *
 import math
 import random
 
-
 """
 This is the main projectile that the user uses, used when 'f' is pressed
+user can shoot a fireball every 0.5 seconds
 """
 class Fireball:
     def __init__(self, cx, cy, cdx, cdy):
@@ -43,9 +43,8 @@ class Fireball:
         else:
             return -1, -1
 
-
 """
-This is the main character class
+This is the main character class, user moves with 'wasd'
 """
 class Character:
     def __init__(self):
@@ -78,6 +77,9 @@ class Character:
             return True
         return False
     
+"""
+This is a melee type of enemy that removes one health from the user every second in range
+"""   
 class EnemyDog:
     def __init__(self, cx, cy):
         self.health = 2
@@ -113,7 +115,6 @@ class EnemyDog:
             user.health -= 1
             user.hitCurr = True
 
-
 """
 onAppStart basically sets all of the elementary values for the game.
 """
@@ -134,6 +135,31 @@ def onAppStart(app):
     app.gameOver = False
     app.gameOverCounter = 0
     spawnEnemies(app)
+
+"""
+Spawns dog enemies and makes sure they dont spawn on top of eachother, also spawns random amount
+from 2-5
+"""
+def spawnEnemies(app):
+    numEnemies = random.randint(2,5)
+    for i in range(numEnemies):
+        enemyWidth = 20
+        enemyHeight = 20
+        leftMostSpawn = app.boardLeft + (app.borderWidth//2 + 1) + enemyWidth
+        rightMostSpawn = app.boardLeft + app.boardWidth - (app.borderWidth//2 + 1) - enemyWidth
+        upMostSpawn = app.boardTop + (app.borderWidth//2 + 1) + enemyHeight 
+        lowMostSpawn = app.boardTop + app.boardHeight - (app.borderWidth//2 + 1) - enemyHeight
+        cx = random.randint(leftMostSpawn, rightMostSpawn)
+        cy = random.randint(upMostSpawn, lowMostSpawn)
+        for i in range(len(app.enemies)):
+            currEnemy = app.enemies[i]
+            hypot = (currEnemy.width**2 + currEnemy.height**2) ** 0.5
+            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
+                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
+                    cx = random.randint(leftMostSpawn, rightMostSpawn)
+                    cy = random.randint(upMostSpawn, lowMostSpawn)
+        newEnemy = EnemyDog(cx, cy)
+        app.enemies.append(newEnemy)
 
 """
 This keeps track of all timed events and movement of main character, npcs, and 
@@ -170,7 +196,7 @@ def onStep(app):
             app.user.fireballs.remove(fireball) 
 
 """
-This checks if a move for an npc or the user is legal, can also apply to moves
+This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
     if character.cx + character.cdx + character.width//2 + app.borderWidth/2 > app.boardWidth + app.boardLeft:
@@ -190,34 +216,6 @@ def isLegal(app, character):
                     app.enemies.remove(enemy)
                 return False
     return True
-
-"""
-Spawns dog enemies and makes sure they dont spawn on top of eachother
-"""
-def spawnEnemies(app):
-    numEnemies = random.randint(2,5)
-    for i in range(numEnemies):
-        enemyWidth = 20
-        enemyHeight = 20
-        leftMostSpawn = app.boardLeft + (app.borderWidth//2 + 1) + enemyWidth
-        rightMostSpawn = app.boardLeft + app.boardWidth - (app.borderWidth//2 + 1) - enemyWidth
-        upMostSpawn = app.boardTop + (app.borderWidth//2 + 1) + enemyHeight 
-        lowMostSpawn = app.boardTop + app.boardHeight - (app.borderWidth//2 + 1) - enemyHeight
-        cx = random.randint(leftMostSpawn, rightMostSpawn)
-        cy = random.randint(upMostSpawn, lowMostSpawn)
-        for i in range(len(app.enemies)):
-            currEnemy = app.enemies[i]
-            hypot = (currEnemy.width**2 + currEnemy.height**2) ** 0.5
-            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
-                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
-                    cx = random.randint(leftMostSpawn, rightMostSpawn)
-                    cy = random.randint(upMostSpawn, lowMostSpawn)
-        newEnemy = EnemyDog(cx, cy)
-        app.enemies.append(newEnemy)
-
-def drawGameOver(app):
-    drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
-    drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
 
 """
 This basically gives all the moves of the character and allows for extra stuff during different phrases of the program.
@@ -278,11 +276,14 @@ def onKeyRelease(app, key):
 """
 Draw the board outline (with double-thickness)
 """
-
 def drawBoardBorder(app):
   drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
            fill=None, border='black', borderWidth = app.borderWidth)
   
+"This draws the game over screen when the user has 0 health"
+def drawGameOver(app):
+    drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
+    drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
   
 def redrawAll(app):
     drawBoardBorder(app)
@@ -296,8 +297,7 @@ def redrawAll(app):
     for i in range(app.user.health):
         drawRect(60 + i*30, 10, 10, 10, fill = "pink", align = "center")
     if app.gameOver:
-        drawGameOver(app)
-    
+        drawGameOver(app) 
 
 def main():
     runApp(width = 500, height = 500)
