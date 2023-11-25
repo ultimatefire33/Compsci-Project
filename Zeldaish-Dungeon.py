@@ -282,14 +282,14 @@ def onStep(app):
                 app.wait = True
 
     for fireball in app.user.fireballs:
-        if isLegal(app, fireball):
+        if isLegal(app, fireball) and app.gameOver == False:
             fireball.changeFireballPos()  
         else:
             app.user.fireballs.remove(fireball) 
 
     for mage in app.mageEnemies:
         for fireball in mage.fireballs:
-            if isLegal(app, fireball):
+            if isLegal(app, fireball) and app.gameOver == False:
                 fireball.changeFireballPos()
             else:
                 mage.fireballs.remove(fireball)
