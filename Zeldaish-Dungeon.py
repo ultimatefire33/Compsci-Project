@@ -54,6 +54,7 @@ class Fireball:
 
 """
 This is the main character class, user moves with 'wasd'
+This is the main character class, user moves with 'wasd'
 """
 class Character:
     def __init__(self):
@@ -296,6 +297,7 @@ def onStep(app):
 
 """
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
+This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
     if character.cx + character.cdx + character.width//2 + app.borderWidth/2 > app.boardWidth + app.boardLeft:
@@ -393,6 +395,10 @@ def drawBoardBorder(app):
 def drawGameOver(app):
     drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
     drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
+"This draws the game over screen when the user has 0 health"
+def drawGameOver(app):
+    drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
+    drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
   
 def redrawAll(app):
     drawBoardBorder(app)
@@ -414,6 +420,7 @@ def redrawAll(app):
         drawRect(60 + i*30, 10, 10, 10, fill = "pink", align = "center")
         
     if app.gameOver:
+        drawGameOver(app) 
         drawGameOver(app) 
 
 def main():
