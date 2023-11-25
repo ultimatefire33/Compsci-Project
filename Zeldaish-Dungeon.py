@@ -4,7 +4,7 @@ import random
 
 """
 This is the main projectile that the user uses, used when 'f' is pressed
-user can shoot a fireball every 0.5 seconds
+user can shoot a fireball every 0.5 seconds, also contains enemy fireball
 """
 class Fireball:
     def __init__(self, cx, cy, cdx, cdy, enemyFireball):
@@ -53,7 +53,6 @@ class Fireball:
             return -1, -1
 
 """
-This is the main character class, user moves with 'wasd'
 This is the main character class, user moves with 'wasd'
 """
 class Character:
@@ -202,11 +201,11 @@ def onAppStart(app):
 
 """
 Spawns dog enemies and makes sure they dont spawn on top of eachother, also spawns random amount
-from 2-5
+from 1-3 and mages from 1-2
 """
 def spawnEnemies(app):
-    numEnemyDog = random.randint(1,2)
-    numEnemyMage = random.randint(3,5)
+    numEnemyDog = random.randint(1,3)
+    numEnemyMage = random.randint(1,2)
     enemyWidth = 20
     enemyHeight = 20
     leftMostSpawn = app.boardLeft + (app.borderWidth//2 + 1) + enemyWidth
@@ -296,7 +295,6 @@ def onStep(app):
                 mage.fireballs.remove(fireball)
 
 """
-This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
@@ -391,10 +389,6 @@ def drawBoardBorder(app):
   drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
            fill=None, border='black', borderWidth = app.borderWidth)
   
-"This draws the game over screen when the user has 0 health"
-def drawGameOver(app):
-    drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
-    drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
 "This draws the game over screen when the user has 0 health"
 def drawGameOver(app):
     drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
