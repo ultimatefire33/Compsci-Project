@@ -1,4 +1,6 @@
 from cmu_graphics import *
+from PIL import Image
+import os, pathlib
 import math
 import random
 
@@ -8,8 +10,11 @@ user can shoot a fireball every 0.5 seconds, also contains enemy fireball
 """
 class Fireball:
     def __init__(self, cx, cy, cdx, cdy, enemyFireball):
-        self.speed = 5
-        self.radius = 5
+        if enemyFireball:
+            self.speed = 6
+        else:
+            self.speed = 6
+
         if not (enemyFireball):
             self.cdx , self.cdy = self.getDirection(cdx, cdy) 
             self.cdx = self.cdx * self.speed
@@ -20,15 +25,19 @@ class Fireball:
 
         self.cx = cx + self.cdx
         self.cy = cy + self.cdy
-        self.width = self.radius
-        self.height = self.radius
+        self.width = 43
+        self.height = 35
+        spritestrip = Image.open('images/zelda_enemies_sheet.png')
         self.enemyFireball = enemyFireball
+        self.sprites = []
+        self.spriteCounterFire = 0
+        for i in range(2):
+            self.sprite = CMUImage(spritestrip.crop((577, 0 + 60*i, 620, 35 + 60*i)))
+            self.sprites.append(self.sprite)
     
     def drawFireball(self):
-        if self.enemyFireball == False:
-            drawCircle(self.cx, self.cy, self.radius, fill = "red")
-        else:
-            drawCircle(self.cx, self.cy, self.radius, fill = "blue")
+        sprite = self.sprites[self.spriteCounterFire]
+        drawImage(sprite, self.cx, self.cy)
 
     def changeFireballPos(self):
         self.cx += self.cdx
@@ -58,23 +67,82 @@ This is the main character class, user moves with 'wasd'
 class Character:
     def __init__(self):
         self.health = 5
-        self.speed = 3
-        self.height = 20
-        self.width = 20
+        self.speed = 5
+        self.height = 15
+        self.width = 16
         self.cx = 100
         self.cy = 100
         self.cdx = 0
         self.cdy = 0
-        self.charMoving = False
         self.hitCurr = False
         self.meleeDone = False
         self.fireballs = []
+        spritestrip = Image.open('images/zelda_sprite_sheet.png')
+        self.sprites = []
+        self.currSprites = []
+        self.spriteCounter = 0
+        self.meleeSprites = []
+
+        for i in range(4):
+            for j in range(2):
+                self.sprite = CMUImage(spritestrip.crop((0+60*i, 0 + 60*j, 29+60*i, 31 + 60*j)))
+                self.sprites.append(self.sprite)
+
+        self.sprite = CMUImage(spritestrip.crop((0, 160, 30, 219)))
+        self.meleeSprites.append(self.sprite)
+        self.sprite = CMUImage(spritestrip.crop((40, 170, 103, 208)))
+        self.meleeSprites.append(self.sprite)
+        self.sprite = CMUImage(spritestrip.crop((108, 158, 150, 219)))
+        self.meleeSprites.append(self.sprite)
+        self.sprite = CMUImage(spritestrip.crop((159, 169, 219, 206)))
+        self.meleeSprites.append(self.sprite)
 
     def drawCharacter(self):
-        if self.meleeDone:
-            drawRect(self.cx, self.cy, self.width, self.height, fill = "red", align = "center")
+        if not self.meleeDone:
+            if self.cdx == 0 and self.cdy == 0:
+                self.currSprites = self.sprites[0]
+                sprite = self.currSprites
+                drawImage(sprite, self.cx, self.cy)
+
+            if self.cdy > 0:
+                self.currSprites = self.sprites[0:2]
+                sprite = self.currSprites[self.spriteCounter]
+                drawImage(sprite, self.cx, self.cy)
+            
+            elif self.cdy < 0:
+                self.currSprites = self.sprites[4:6]
+                sprite = self.currSprites[self.spriteCounter]
+                drawImage(sprite, self.cx, self.cy)
+            
+            elif self.cdx > 0:
+                self.currSprites = self.sprites[6:]
+                sprite = self.currSprites[self.spriteCounter]
+                drawImage(sprite, self.cx, self.cy)
+
+            elif self.cdx < 0:
+                self.currSprites = self.sprites[2:4]
+                sprite = self.currSprites[self.spriteCounter]
+                drawImage(sprite, self.cx, self.cy)
         else:
-            drawRect(self.cx, self.cy, self.width, self.height, fill = "blue", align = "center")
+            if self.cdx > 0:
+                self.currSprites = self.meleeSprites[3]
+                sprite = self.currSprites
+                drawImage(sprite, self.cx, self.cy)
+
+            elif self.cdx < 0:
+                self.currSprites = self.meleeSprites[1]
+                sprite = self.currSprites
+                drawImage(sprite, self.cx, self.cy)
+
+            elif self.cdy > 0 or (self.cdy == 0 and self.cdx == 0):
+                self.currSprites = self.meleeSprites[0]
+                sprite = self.currSprites
+                drawImage(sprite, self.cx, self.cy)
+
+            elif self.cdy < 0:
+                self.currSprites = self.meleeSprites[2]
+                sprite = self.currSprites
+                drawImage(sprite, self.cx, self.cy)
 
     def changePosition(self):
         self.cx += self.cdx
@@ -92,7 +160,7 @@ class Character:
     
     def melee(self, enemy):
         totalDistance = math.dist([self.cx, self.cy], [enemy.cx, enemy.cy])
-        if totalDistance < self.width * 2:
+        if totalDistance <= self.width * 2:
             enemy.health -= 2
 
 """
@@ -101,35 +169,39 @@ It will back away when the user gets into a certain distance with the enemy.
 """          
 class EnemyMage:
     def __init__(self, cx, cy):
-        self.health = 2
+        self.health = 1
         self.cx = cx
         self.cy = cy
         self.cdx = 0
         self.cdy = 0
         self.fireballCDX = 0
         self.fireballCDY = 0
-        self.height = 20
-        self.width = 20
+        self.height = 30
+        self.width = 30
         self.speed = 0
         self.fireballs = []
+        spritestrip = Image.open('images/zelda_enemies_sheet.png')
+        self.sprites = []
+        self.currSprites = []
+        for i in range(3):
+            self.sprite = CMUImage(spritestrip.crop((460+60*i, 110, 499+60*i, 146)))
+            self.sprites.append(self.sprite)
     
     def drawEnemy(self):
-        drawRect(self.cx, self.cy, self.width, self.height, fill = "purple", align = "center")
+        if self.fireballCDY >= 0 and self.fireballCDX <= 0:
+            self.currSprites = self.sprites[0]
+            sprite = self.currSprites
+            drawImage(sprite, self.cx, self.cy)
 
-    def changePosition(self, user):
-        if user.health > 0:
-            totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
-            if totalDistance < self.width * 2:
-                self.speed = 2
-            else:
-                self.speed = 0
-            self.cdx = -((user.cx - self.cx) / totalDistance) * self.speed
-            self.cdy = -((user.cy - self.cy) / totalDistance) * self.speed
-            self.cx += self.cdx
-            self.cy += self.cdy
-        else:
-            self.cdx = 0
-            self.cdy = 0
+        if self.fireballCDY >= 0 and self.fireballCDX > 0:
+            self.currSprites = self.sprites[2]
+            sprite = self.currSprites
+            drawImage(sprite, self.cx, self.cy)
+        
+        if self.fireballCDY < 0:
+            self.currSprites = self.sprites[1]
+            sprite = self.currSprites
+            drawImage(sprite, self.cx, self.cy)
 
     def createFireball(self, user):
         totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
@@ -141,9 +213,9 @@ class EnemyMage:
 """
 This is a melee type of enemy that removes one health from the user every second in range
 """   
-class EnemyDog:
+class EnemyKnight:
     def __init__(self, cx, cy):
-        self.health = 3
+        self.health = 2
         self.cx = cx
         self.cy = cy
         self.cdx = 0
@@ -151,15 +223,46 @@ class EnemyDog:
         self.height = 20
         self.width = 20
         self.speed = 0
+        spritestrip = Image.open('images/zelda_enemies_sheet.png')
+        self.sprites = []
+        self.currSprites = []
+        self.spriteCounterEnemy = 0
+        for i in range(4):
+            for j in range(2):
+                self.sprite = CMUImage(spritestrip.crop((224+60*i, 349 + 60*j, 262+60*i, 386 + 60*j)))
+                self.sprites.append(self.sprite)
     
     def drawEnemy(self):
-        drawRect(self.cx, self.cy, self.width, self.height, fill = "green", align = "center")
+        if self.cdx == 0 and self.cdy == 0:
+            self.currSprites = self.sprites[0]
+            sprite = self.currSprites
+            drawImage(sprite, self.cx, self.cy)
+
+        elif abs(self.cdy) > abs(self.cdx) and self.cdy > 0:
+            self.currSprites = self.sprites[0:2]
+            sprite = self.currSprites[self.spriteCounterEnemy]
+            drawImage(sprite, self.cx, self.cy)
+        
+        elif abs(self.cdy) > abs(self.cdx) and self.cdy < 0:
+            self.currSprites = self.sprites[4:6]
+            sprite = self.currSprites[self.spriteCounterEnemy]
+            drawImage(sprite, self.cx, self.cy)
+        
+        elif abs(self.cdx) >= abs(self.cdy) and self.cdx > 0:
+            self.currSprites = self.sprites[6:]
+            sprite = self.currSprites[self.spriteCounterEnemy]
+            drawImage(sprite, self.cx, self.cy)
+
+        elif abs(self.cdx) >= abs(self.cdy) and self.cdx < 0:
+            self.currSprites = self.sprites[2:4]
+            sprite = self.currSprites[self.spriteCounterEnemy]
+            drawImage(sprite, self.cx, self.cy)
 
     def changePosition(self, user):
         if user.health > 0:
             totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
             if totalDistance > (self.width):
-                self.speed = 1
+                self.speed = 3
             else:
                 self.speed = 0
             self.cdx = ((user.cx - self.cx) / totalDistance) * self.speed
@@ -172,7 +275,7 @@ class EnemyDog:
     
     def melee(self, user):
         totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
-        if totalDistance < self.width:
+        if totalDistance <= self.width:
             user.health -= 1
             user.hitCurr = True
 
@@ -180,13 +283,11 @@ class EnemyDog:
 onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
-    app.stepsPerSecond = 30
-    app.boardLeft = 25
-    app.boardTop = 50
-    app.boardWidth = 450
-    app.boardHeight = 400
-    app.borderWidth = 5
-    app.direction = None
+    app.stepsPerSecond = 20
+    app.boardLeft = 57
+    app.boardTop = 60
+    app.boardWidth = 386
+    app.boardHeight = 227
     app.globalCounter = 0
     app.fireCounter = 30
     app.user = Character()
@@ -197,23 +298,27 @@ def onAppStart(app):
     app.gameOver = False
     app.gameOverCounter = 0
     app.wait = False
+    app.tileset = Image.open('images/zelda_tileset.png')
+    app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
     spawnEnemies(app)
 
 """
-Spawns dog enemies and makes sure they dont spawn on top of eachother, also spawns random amount
+Spawns knight enemies and makes sure they dont spawn on top of eachother, also spawns random amount
 from 1-3 and mages from 1-2
 """
 def spawnEnemies(app):
-    numEnemyDog = random.randint(1,3)
-    numEnemyMage = random.randint(1,2)
-    enemyWidth = 20
-    enemyHeight = 20
-    leftMostSpawn = app.boardLeft + (app.borderWidth//2 + 1) + enemyWidth
-    rightMostSpawn = app.boardLeft + app.boardWidth - (app.borderWidth//2 + 1) - enemyWidth
-    upMostSpawn = app.boardTop + (app.borderWidth//2 + 1) + enemyHeight 
-    lowMostSpawn = app.boardTop + app.boardHeight - (app.borderWidth//2 + 1) - enemyHeight
+    numEnemyKnight = random.randint(1,2)
+    numEnemyMage = random.randint(1,1)
+    #numEnemyKnight = 0
+    #numEnemyMage = 0
+    enemyWidth = 35
+    enemyHeight = 35
+    leftMostSpawn = app.boardLeft + enemyWidth
+    rightMostSpawn = app.boardLeft + app.boardWidth - enemyWidth
+    upMostSpawn = app.boardTop + enemyHeight 
+    lowMostSpawn = app.boardTop + app.boardHeight - enemyHeight
 
-    for i in range(numEnemyDog):
+    for i in range(numEnemyKnight):
         cx = random.randint(leftMostSpawn, rightMostSpawn)
         cy = random.randint(upMostSpawn, lowMostSpawn)
         for i in range(len(app.enemies)):
@@ -223,8 +328,8 @@ def spawnEnemies(app):
                 while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
                     cy = random.randint(upMostSpawn, lowMostSpawn)
-        dogEnemy = EnemyDog(cx, cy)
-        app.enemies.append(dogEnemy)
+        knightEnemy = EnemyKnight(cx, cy)
+        app.enemies.append(knightEnemy)
 
     for i in range(numEnemyMage):
         cx = random.randint(leftMostSpawn, rightMostSpawn)
@@ -245,33 +350,53 @@ This keeps track of all timed events and movement of main character, npcs, and
 projectiles
 """
 def onStep(app):
+    app.timerCounter += 1
+
     if app.user.health <= 0:
         app.gameOver = True
 
     if app.gameOver and app.gameOverCounter < 100:
         app.gameOverCounter += 1
 
-    app.timerCounter += 1
+    if app.user.meleeDone != True:
+        if app.user.cdx == 0 and app.user.cdy == 0:
+            app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
+        else:
+            app.user.spriteCounter = (1 + app.user.spriteCounter) % len(app.user.currSprites)
+    else:
+        app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
+
+    for enemy in app.enemies:
+        if isinstance(enemy, EnemyKnight):
+            if enemy.cdx == 0 and enemy.cdy == 0:
+                enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % 1
+            else:
+                enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.currSprites)
+        elif isinstance(enemy, EnemyMage):
+            for fireball in enemy.fireballs:
+                fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites)
+    
+    for fireball in app.user.fireballs:
+        fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites) 
 
     if app.timerCounter % 15 == 0:
         app.fireballShot = False
+        app.user.meleeDone = False
+        app.wait = False
 
     if app.timerCounter % 30 == 0:
         app.user.hitCurr = False
-
-    if app.timerCounter % 60 == 0:
-        app.user.meleeDone = False
-        app.wait = False
         for mage in app.mageEnemies:
-            mage.createFireball(app.user)
+            mage.createFireball(app.user)  
 
     if isLegal(app, app.user)and app.user.health > 0:
         app.user.changePosition()
     
     for enemy in app.enemies:
         if isLegal(app, enemy):
-            enemy.changePosition(app.user)
-            if app.user.hitCurr == False and isinstance(enemy, EnemyDog):
+            if isinstance(enemy, EnemyKnight):
+                enemy.changePosition(app.user)
+            if app.user.hitCurr == False and isinstance(enemy, EnemyKnight):
                 enemy.melee(app.user)
             if app.user.meleeDone == True and app.wait == False:
                 app.user.melee(enemy)
@@ -298,13 +423,13 @@ def onStep(app):
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
-    if character.cx + character.cdx + character.width//2 + app.borderWidth/2 > app.boardWidth + app.boardLeft:
+    if character.cx + character.cdx + character.width/2 + 15 > app.boardWidth + app.boardLeft:
         return False
-    if character.cy + character.cdy + character.height//2 + app.borderWidth/2 > app.boardHeight + app.boardTop:
+    if character.cy + character.cdy + character.height/2 + 15 > app.boardHeight + app.boardTop:
         return False
-    if character.cx - character.width//2  + character.cdx - app.borderWidth/2 < app.boardLeft:
+    if character.cx - character.width/2  + character.cdx < app.boardLeft:
         return False
-    if character.cy - character.height//2 + character.cdy - app.borderWidth/2 < app.boardTop:
+    if character.cy - character.height/2 + character.cdy < app.boardTop:
         return False
     
     if isinstance(character, Fireball):
@@ -328,46 +453,47 @@ This basically gives all the moves of the character and allows for extra stuff d
 I will add those phases later.
 """
 def onKeyHold(app, keys):
-    if len(keys) >= 2:
-        if 'a' in keys and 's' in keys:
-            app.user.cdx = -app.user.speed
-            app.user.cdy = app.user.speed
-        elif 's' in keys and 'd' in keys:
-            app.user.cdx = app.user.speed
-            app.user.cdy = app.user.speed
-        elif 'w' in keys and 'd' in keys:
-            app.user.cdx = app.user.speed
-            app.user.cdy = -app.user.speed
-        elif 'a' in keys and 'w' in keys:
-            app.user.cdx = -app.user.speed
-            app.user.cdy = -app.user.speed
-        elif 'a' in keys and 'd' in keys:
-            app.user.cdx = 0
-            app.user.cdy = 0
-        elif 'w' in keys and 's' in keys:
-            app.user.cdx = 0 
-            app.user.cdy = 0
+    if app.user.health > 0:
+        if len(keys) >= 2:
+            if 'a' in keys and 's' in keys:
+                app.user.cdx = -app.user.speed
+                app.user.cdy = app.user.speed
+            elif 's' in keys and 'd' in keys:
+                app.user.cdx = app.user.speed
+                app.user.cdy = app.user.speed
+            elif 'w' in keys and 'd' in keys:
+                app.user.cdx = app.user.speed
+                app.user.cdy = -app.user.speed
+            elif 'a' in keys and 'w' in keys:
+                app.user.cdx = -app.user.speed
+                app.user.cdy = -app.user.speed
+            elif 'a' in keys and 'd' in keys:
+                app.user.cdx = 0
+                app.user.cdy = 0
+            elif 'w' in keys and 's' in keys:
+                app.user.cdx = 0 
+                app.user.cdy = 0
 
-    elif len(keys) == 1:
-        if 'a' in keys:
-            app.user.cdx = -app.user.speed
-            app.user.cdy = 0
-        elif 's' in keys:
-            app.user.cdy = app.user.speed
-            app.user.cdx = 0
-        elif 'd' in keys:
-            app.user.cdx = app.user.speed
-            app.user.cdy = 0
-        elif 'w' in keys:
-            app.user.cdy = -app.user.speed
-            app.user.cdx = 0
-    if 'f' in keys:
-        if app.fireballShot == False:
-            app.user.createFireball()
-            app.fireballShot = True
-    if 'g' in keys:
-        if app.user.meleeDone == False:
-            app.user.meleeDone = True
+        elif len(keys) == 1:
+            if 'a' in keys:
+                app.user.cdx = -app.user.speed
+                app.user.cdy = 0
+            elif 's' in keys:
+                app.user.cdy = app.user.speed
+                app.user.cdx = 0
+            elif 'd' in keys:
+                app.user.cdx = app.user.speed
+                app.user.cdy = 0
+            elif 'w' in keys:
+                app.user.cdy = -app.user.speed
+                app.user.cdx = 0
+        if 'f' in keys:
+            if app.fireballShot == False:
+                app.user.createFireball()
+                app.fireballShot = True
+        if 'g' in keys:
+            if app.user.meleeDone == False and app.wait == False:
+                app.user.meleeDone = True
 
 """
 When the key is released the movement in the direction of that key is 0 now.
@@ -383,41 +509,74 @@ def onKeyRelease(app, key):
         app.user.cdy = 0
 
 """
-Draw the board outline (with double-thickness)
+Draws healthbar for the user.
+"""
+def drawHealthBar(app):
+    drawRect(0, 0, 240, 30) 
+    drawLabel("Health: ", 30, 15, fill = "white")
+    heart = CMUImage(app.spritestrip.crop((467, 382, 487, 402)))
+    for i in range(app.user.health):
+        drawImage(heart, 50 + i*40, 5)
+"""
+Draws the base plate where the character walks on.
+"""
+def drawBackground(app):
+    background = CMUImage(app.tileset.crop((3, 384, 386, 608)))
+    drawImage(background, app.boardLeft + 4, app.boardTop + 4)
+"""
+Draws the walls of the room
+"""
+def drawExterior(app):
+    exterior = CMUImage(app.tileset.crop((1045, 22, 1550, 375)))
+    drawImage(exterior, 0, 0)
+
+"""
+Draw the board outline (with double-thickness).
 """
 def drawBoardBorder(app):
   drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
-           fill=None, border='black', borderWidth = app.borderWidth)
+           fill=None, border='black')
   
-"This draws the game over screen when the user has 0 health"
+"""
+Draws the doors of the room
+"""
+def drawDoorBlocks(app):
+    block1 = CMUImage(app.tileset.crop((1630, 88, 1695, 153)))
+    block2 = CMUImage(app.tileset.crop((1630, 221, 1695, 286)))
+    block3 = CMUImage(app.tileset.crop((1630, 154, 1695, 218)))
+    block4 = CMUImage(app.tileset.crop((1696, 23, 1760, 86)))
+    drawImage(block1, -3, 144)
+    drawImage(block2, 221, 289)
+    drawImage(block3, 445, 144)
+    drawImage(block4, 221, 1)
+
+  
+"""
+This draws the game over screen when the user has 0 health.
+"""
 def drawGameOver(app):
-    drawRect(0, 0, 500, 500, fill = "black", opacity = app.gameOverCounter)
-    drawLabel("You Died", 250, 250, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
+    drawRect(0, 0, 516, 355, fill = "black", opacity = app.gameOverCounter)
+    drawLabel("You Died", 258, 178, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
   
 def redrawAll(app):
     drawBoardBorder(app)
-    drawRect(0, 0, 190, 20, fill = "black")
-    drawLabel("Health: ", 30, 10, fill = "white") 
+    drawExterior(app)
+    drawBackground(app)
+    drawDoorBlocks(app)
+    drawHealthBar(app)
     app.user.drawCharacter()
-
     for fireball in app.user.fireballs:
         fireball.drawFireball()
-
     for enemy in app.enemies:
         enemy.drawEnemy()
-
     for mage in app.mageEnemies:
         for fireball in mage.fireballs:
-            fireball.drawFireball()
-    
-    for i in range(app.user.health):
-        drawRect(60 + i*30, 10, 10, 10, fill = "pink", align = "center")
-        
+            fireball.drawFireball()  
     if app.gameOver:
         drawGameOver(app) 
-        drawGameOver(app) 
+        drawGameOver(app)    
 
 def main():
-    runApp(width = 500, height = 500)
+    runApp(width = 505, height = 351)
 
 main()
