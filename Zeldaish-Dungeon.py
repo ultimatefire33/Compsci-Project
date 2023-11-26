@@ -227,6 +227,7 @@ class EnemyKnight:
         self.sprites = []
         self.currSprites = []
         self.spriteCounterEnemy = 0
+        self.collision = False
         for i in range(4):
             for j in range(2):
                 self.sprite = CMUImage(spritestrip.crop((224+60*i, 349 + 60*j, 262+60*i, 386 + 60*j)))
@@ -258,26 +259,54 @@ class EnemyKnight:
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
 
-    def changePosition(self, user):
+    def changePosition(self, user, obstacles):
         if user.health > 0:
-            totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
-            if totalDistance > (self.width):
-                self.speed = 3
+            directionVectX =  self.cx - user.cx
+            directionVectY = self.cy - user.cy
+            totalDistance = math.hypot(directionVectX, directionVectY)
+            if totalDistance > self.width:
+                self.speed = 2
+                self.cdx = directionVectX / totalDistance
+                self.cdy = directionVectY / totalDistance
             else:
                 self.speed = 0
-            self.cdx = ((user.cx - self.cx) / totalDistance) * self.speed
-            self.cdy = ((user.cy - self.cy) / totalDistance) * self.speed
-            self.cx += self.cdx
-            self.cy += self.cdy
+                self.cdx = 0
+                self.cdy = 0
+            
+            angleToPlayer = math.atan2(-directionVectY, -directionVectX)
+            self.cx += math.cos(angleToPlayer) * self.speed
+            self.cy += math.sin(angleToPlayer) * self.speed
+
+            for obstacle in obstacles:
+                obstacleVectX = obstacle.cx - self.cx
+                obstacleVectY = obstacle.cy - self.cy
+                obstacleDistance = math.hypot(obstacleVectX, obstacleVectY)
+                if obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2:
+                    changeAngle = math.atan2(obstacleVectY, obstacleVectX) + math.pi / 2
+                    self.cx += math.cos(changeAngle) * self.speed * 2
+                    self.cy += math.sin(changeAngle) * self.speed * 2
         else:
             self.cdx = 0
             self.cdy = 0
-    
+            self.speed = 0
+
     def melee(self, user):
         totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
         if totalDistance <= self.width:
             user.health -= 1
             user.hitCurr = True
+
+class Obstacle:
+    def __init__(self, cx, cy):
+        self.cx = cx
+        self.cy = cy
+        self.width = 33
+        self.height = 32
+        self.tileset = Image.open('images/zelda_tileset.png')
+        self.sprite = CMUImage(self.tileset.crop((2000, 22, 2033, 54)))
+
+    def drawObstacle(self):
+        drawImage(self.sprite, self.cx, self.cy)
 
 """
 onAppStart basically sets all of the elementary values for the game.
@@ -295,22 +324,22 @@ def onAppStart(app):
     app.fireballShot = False
     app.enemies = []
     app.mageEnemies = []
+    app.obstacles = []
     app.gameOver = False
     app.gameOverCounter = 0
     app.wait = False
     app.tileset = Image.open('images/zelda_tileset.png')
     app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
     spawnEnemies(app)
+    spawnObstacles(app)
 
 """
 Spawns knight enemies and makes sure they dont spawn on top of eachother, also spawns random amount
 from 1-3 and mages from 1-2
 """
 def spawnEnemies(app):
-    numEnemyKnight = random.randint(1,2)
-    numEnemyMage = random.randint(1,1)
-    #numEnemyKnight = 0
-    #numEnemyMage = 0
+    numEnemyKnight = random.randint(1,3)
+    numEnemyMage = random.randint(1,2)
     enemyWidth = 35
     enemyHeight = 35
     leftMostSpawn = app.boardLeft + enemyWidth
@@ -323,7 +352,7 @@ def spawnEnemies(app):
         cy = random.randint(upMostSpawn, lowMostSpawn)
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
-            hypot = (currEnemy.width**2 + currEnemy.height**2) ** 0.5
+            hypot = math.hypot(currEnemy.width, currEnemy.height)
             if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
                 while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
@@ -336,7 +365,7 @@ def spawnEnemies(app):
         cy = random.randint(upMostSpawn, lowMostSpawn)
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
-            hypot = (currEnemy.width**2 + currEnemy.height**2) ** 0.5
+            hypot = math.hypot(currEnemy.width, currEnemy.height)
             if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
                 while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
@@ -344,6 +373,31 @@ def spawnEnemies(app):
         mageEnemy = EnemyMage(cx, cy)
         app.enemies.append(mageEnemy)
         app.mageEnemies.append(mageEnemy)
+
+def spawnObstacles(app):
+    numObstacles = random.randint(1,2)
+    numObstacles = 1
+    obstacleWidth = 35
+    obstacleHeight = 35
+    padding = 50
+    leftMostSpawn = app.boardLeft + obstacleWidth + padding
+    rightMostSpawn = app.boardLeft + app.boardWidth - obstacleWidth - padding
+    upMostSpawn = app.boardTop + obstacleHeight + padding
+    lowMostSpawn = app.boardTop + app.boardHeight - obstacleHeight - padding
+    for i in range(numObstacles):
+        cx = random.randint(leftMostSpawn, rightMostSpawn)
+        cy = random.randint(upMostSpawn, lowMostSpawn)
+        for i in range(len(app.enemies)):
+            currEnemy = app.enemies[i]
+            hypotEnemy = math.hypot(currEnemy.width, currEnemy.height)
+            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8:
+                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 == True:
+                    cx = random.randint(leftMostSpawn, rightMostSpawn)
+                    cy = random.randint(upMostSpawn, lowMostSpawn)
+        newObstacle = Obstacle(cx, cy)
+        app.obstacles.append(newObstacle)
+
+        
 
 """
 This keeps track of all timed events and movement of main character, npcs, and 
@@ -395,7 +449,7 @@ def onStep(app):
     for enemy in app.enemies:
         if isLegal(app, enemy):
             if isinstance(enemy, EnemyKnight):
-                enemy.changePosition(app.user)
+                enemy.changePosition(app.user, app.obstacles)
             if app.user.hitCurr == False and isinstance(enemy, EnemyKnight):
                 enemy.melee(app.user)
             if app.user.meleeDone == True and app.wait == False:
@@ -423,6 +477,7 @@ def onStep(app):
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
+
     if character.cx + character.cdx + character.width/2 + 15 > app.boardWidth + app.boardLeft:
         return False
     if character.cy + character.cdy + character.height/2 + 15 > app.boardHeight + app.boardTop:
@@ -432,6 +487,15 @@ def isLegal(app, character):
     if character.cy - character.height/2 + character.cdy < app.boardTop:
         return False
     
+    for obstacle in app.obstacles:
+        if isinstance(character, Fireball):
+            if math.dist([character.cx + character.cdx , character.cy + character.cdy], [obstacle.cx, obstacle.cy]) + character.width <= ((obstacle.width**2 + obstacle.height**2) ** 0.5) * 1.3:
+                return False
+            
+        else:
+            if math.dist([character.cx + character.cdx , character.cy + character.cdy], [obstacle.cx, obstacle.cy]) + character.width <= ((obstacle.width**2 + obstacle.height**2) ** 0.5) * 0.9:
+                return False     
+        
     if isinstance(character, Fireball):
         if character.enemyFireball == False:
             for enemy in app.enemies:
@@ -571,6 +635,8 @@ def redrawAll(app):
     for mage in app.mageEnemies:
         for fireball in mage.fireballs:
             fireball.drawFireball()  
+    for obstacle in app.obstacles:
+        obstacle.drawObstacle()
     if app.gameOver:
         drawGameOver(app) 
         drawGameOver(app)    
