@@ -295,7 +295,9 @@ class EnemyKnight:
         if totalDistance <= self.width:
             user.health -= 1
             user.hitCurr = True
-
+"""
+Obstacle that makes it so player and enemies cant move in that square
+"""
 class Obstacle:
     def __init__(self, cx, cy):
         self.cx = cx
@@ -373,6 +375,10 @@ def spawnEnemies(app):
         mageEnemy = EnemyMage(cx, cy)
         app.enemies.append(mageEnemy)
         app.mageEnemies.append(mageEnemy)
+
+"""
+Spawns the obstacles so the enemy won't get clipped into them
+"""        
 
 def spawnObstacles(app):
     numObstacles = random.randint(1,2)
