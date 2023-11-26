@@ -239,22 +239,22 @@ class EnemyKnight:
             sprite = self.currSprites
             drawImage(sprite, self.cx, self.cy)
 
-        elif abs(self.cdy) > abs(self.cdx) and self.cdy > 0:
+        elif abs(self.cdy) > abs(self.cdx) and self.cdy < 0:
             self.currSprites = self.sprites[0:2]
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
         
-        elif abs(self.cdy) > abs(self.cdx) and self.cdy < 0:
+        elif abs(self.cdy) > abs(self.cdx) and self.cdy > 0:
             self.currSprites = self.sprites[4:6]
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
         
-        elif abs(self.cdx) >= abs(self.cdy) and self.cdx > 0:
+        elif abs(self.cdx) >= abs(self.cdy) and self.cdx < 0:
             self.currSprites = self.sprites[6:]
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
 
-        elif abs(self.cdx) >= abs(self.cdy) and self.cdx < 0:
+        elif abs(self.cdx) >= abs(self.cdy) and self.cdx > 0:
             self.currSprites = self.sprites[2:4]
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
@@ -295,7 +295,9 @@ class EnemyKnight:
         if totalDistance <= self.width:
             user.health -= 1
             user.hitCurr = True
-
+"""
+Obstacle that makes it so player and enemies cant move in that square
+"""
 class Obstacle:
     def __init__(self, cx, cy):
         self.cx = cx
@@ -338,7 +340,7 @@ Spawns knight enemies and makes sure they dont spawn on top of eachother, also s
 from 1-3 and mages from 1-2
 """
 def spawnEnemies(app):
-    numEnemyKnight = random.randint(1,3)
+    numEnemyKnight = random.randint(1,2)
     numEnemyMage = random.randint(1,2)
     enemyWidth = 35
     enemyHeight = 35
@@ -373,6 +375,10 @@ def spawnEnemies(app):
         mageEnemy = EnemyMage(cx, cy)
         app.enemies.append(mageEnemy)
         app.mageEnemies.append(mageEnemy)
+
+"""
+Spawns the obstacles so the enemy won't get clipped into them
+"""        
 
 def spawnObstacles(app):
     numObstacles = random.randint(1,2)
