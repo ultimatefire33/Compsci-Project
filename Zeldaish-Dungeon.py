@@ -281,8 +281,14 @@ class EnemyKnight:
                 obstacleVectX = obstacle.cx - self.cx
                 obstacleVectY = obstacle.cy - self.cy
                 obstacleDistance = math.hypot(obstacleVectX, obstacleVectY)
-                if obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2:
+                
+                if obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer > math.pi/2:
                     changeAngle = math.atan2(obstacleVectY, obstacleVectX) + math.pi / 2
+                    self.cx += math.cos(changeAngle) * self.speed * 2
+                    self.cy += math.sin(changeAngle) * self.speed * 2
+
+                elif obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer < math.pi/2:
+                    changeAngle = math.atan2(obstacleVectY, obstacleVectX) - math.pi / 2
                     self.cx += math.cos(changeAngle) * self.speed * 2
                     self.cy += math.sin(changeAngle) * self.speed * 2
         else:
@@ -342,6 +348,7 @@ from 1-3 and mages from 1-2
 def spawnEnemies(app):
     numEnemyKnight = random.randint(1,2)
     numEnemyMage = random.randint(1,2)
+    numEnemyMage = 0
     enemyWidth = 35
     enemyHeight = 35
     leftMostSpawn = app.boardLeft + enemyWidth
