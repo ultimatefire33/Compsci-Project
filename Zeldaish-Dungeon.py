@@ -549,7 +549,6 @@ def drawDoorBlocks(app):
     drawImage(block2, 221, 289)
     drawImage(block3, 445, 144)
     drawImage(block4, 221, 1)
-
   
 """
 This draws the game over screen when the user has 0 health.
