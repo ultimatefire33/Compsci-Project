@@ -220,8 +220,8 @@ class EnemyKnight:
         self.cy = cy
         self.cdx = 0
         self.cdy = 0
-        self.height = 20
-        self.width = 20
+        self.height = 30
+        self.width = 30
         self.speed = 0
         spritestrip = Image.open('images/zelda_enemies_sheet.png')
         self.sprites = []
@@ -300,7 +300,8 @@ class EnemyKnight:
         totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
         if totalDistance <= self.width:
             user.health -= 1
-            user.hitCurr = True
+            user.hitCurr = True  
+
 """
 Obstacle that makes it so player and enemies cant move in that square
 """
@@ -320,6 +321,7 @@ class Obstacle:
 onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
+    app.level = 0
     app.stepsPerSecond = 20
     app.boardLeft = 57
     app.boardTop = 60
@@ -343,12 +345,16 @@ def onAppStart(app):
 
 """
 Spawns knight enemies and makes sure they dont spawn on top of eachother, also spawns random amount
-from 1-3 and mages from 1-2
+from 1-3 and mages from 1-2. Depending on the level, there will be different types of enemies and there will also be
+more or less.
 """
 def spawnEnemies(app):
     numEnemyKnight = random.randint(1,2)
     numEnemyMage = random.randint(1,2)
-    numEnemyMage = 0
+    spawnSpecificEnemy(app, numEnemyKnight, EnemyKnight)
+    spawnSpecificEnemy(app, numEnemyMage, EnemyMage)
+
+def spawnSpecificEnemy(app, numEnemy, enemyType):
     enemyWidth = 35
     enemyHeight = 35
     leftMostSpawn = app.boardLeft + enemyWidth
@@ -356,7 +362,7 @@ def spawnEnemies(app):
     upMostSpawn = app.boardTop + enemyHeight 
     lowMostSpawn = app.boardTop + app.boardHeight - enemyHeight
 
-    for i in range(numEnemyKnight):
+    for i in range(numEnemy):
         cx = random.randint(leftMostSpawn, rightMostSpawn)
         cy = random.randint(upMostSpawn, lowMostSpawn)
         for i in range(len(app.enemies)):
@@ -366,33 +372,19 @@ def spawnEnemies(app):
                 while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
                     cy = random.randint(upMostSpawn, lowMostSpawn)
-        knightEnemy = EnemyKnight(cx, cy)
-        app.enemies.append(knightEnemy)
-
-    for i in range(numEnemyMage):
-        cx = random.randint(leftMostSpawn, rightMostSpawn)
-        cy = random.randint(upMostSpawn, lowMostSpawn)
-        for i in range(len(app.enemies)):
-            currEnemy = app.enemies[i]
-            hypot = math.hypot(currEnemy.width, currEnemy.height)
-            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
-                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
-                    cx = random.randint(leftMostSpawn, rightMostSpawn)
-                    cy = random.randint(upMostSpawn, lowMostSpawn)
-        mageEnemy = EnemyMage(cx, cy)
-        app.enemies.append(mageEnemy)
-        app.mageEnemies.append(mageEnemy)
+        newEnemy = enemyType(cx, cy)
+        app.enemies.append(newEnemy)
+        if isinstance(newEnemy, EnemyMage):
+            app.mageEnemies.append(newEnemy)
 
 """
 Spawns the obstacles so the enemy won't get clipped into them
 """        
-
 def spawnObstacles(app):
     numObstacles = random.randint(1,2)
-    numObstacles = 1
     obstacleWidth = 35
     obstacleHeight = 35
-    padding = 50
+    padding = 35
     leftMostSpawn = app.boardLeft + obstacleWidth + padding
     rightMostSpawn = app.boardLeft + app.boardWidth - obstacleWidth - padding
     upMostSpawn = app.boardTop + obstacleHeight + padding
@@ -403,14 +395,12 @@ def spawnObstacles(app):
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
             hypotEnemy = math.hypot(currEnemy.width, currEnemy.height)
-            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8:
-                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 == True:
+            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 or math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < currEnemy.width * 8:
+                while (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 == True) and (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < currEnemy.width * 8 == True):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
                     cy = random.randint(upMostSpawn, lowMostSpawn)
         newObstacle = Obstacle(cx, cy)
-        app.obstacles.append(newObstacle)
-
-        
+        app.obstacles.append(newObstacle)       
 
 """
 This keeps track of all timed events and movement of main character, npcs, and 
@@ -590,7 +580,7 @@ Draws healthbar for the user.
 """
 def drawHealthBar(app):
     drawRect(0, 0, 240, 30) 
-    drawLabel("Health: ", 30, 15, fill = "white")
+    drawLabel("Health: ", 30, 15, fill = "white", font = "cursive", bold = True)
     heart = CMUImage(app.spritestrip.crop((467, 382, 487, 402)))
     for i in range(app.user.health):
         drawImage(heart, 50 + i*40, 5)
@@ -632,7 +622,7 @@ This draws the game over screen when the user has 0 health.
 """
 def drawGameOver(app):
     drawRect(0, 0, 516, 355, fill = "black", opacity = app.gameOverCounter)
-    drawLabel("You Died", 258, 178, size = 30, font = 'Honoka Mincho', fill = 'red', opacity = app.gameOverCounter)
+    drawLabel("You Died", 258, 178, size = 30, font = 'cursive', fill = 'red', opacity = app.gameOverCounter, bold = True)
   
 def redrawAll(app):
     drawBoardBorder(app)
@@ -643,13 +633,17 @@ def redrawAll(app):
     app.user.drawCharacter()
     for fireball in app.user.fireballs:
         fireball.drawFireball()
+
     for enemy in app.enemies:
         enemy.drawEnemy()
+
     for mage in app.mageEnemies:
         for fireball in mage.fireballs:
-            fireball.drawFireball()  
+            fireball.drawFireball()
+
     for obstacle in app.obstacles:
         obstacle.drawObstacle()
+
     if app.gameOver:
         drawGameOver(app) 
         drawGameOver(app)    
