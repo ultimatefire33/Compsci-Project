@@ -586,6 +586,13 @@ class Obstacle:
     def drawObstacle(self):
         drawImage(self.sprite, self.cx, self.cy)
 
+
+"""
+Above is all classes
+------------------------------------------------------------------------------------------
+Below is methods relating to the game
+"""
+
 """
 onAppStart basically sets all of the elementary values for the game.
 """
@@ -717,6 +724,7 @@ def levelClearer(app):
     if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level != 8):
         spawnKeyAndHealth(app)
         app.levelClear = False
+
 """
 This checks whether the game is done and spawns the triforce shard if it is
 """
@@ -897,7 +905,6 @@ projectiles
 """
 def onStep(app):
     if app.gameStarted:
-        print(app.user.cx, app.user.cy)
         app.timerCounter += 1
 
         if app.user.health <= 0:
@@ -1028,6 +1035,13 @@ def isLegal(app, character):
                 return False       
     return True
 
+
+"""
+Above is all the methods relating to the game
+-----------------------------------------------------------------------------------------------------------------------------
+Below is the app key and mouse movements/presses
+"""
+
 """
 This basically gives all the moves of the character and allows for extra stuff during different phrases of the program.
 I will add those phases later.
@@ -1095,7 +1109,9 @@ def onKeyHold(app, keys):
                 if math.dist([app.user.cx, app.user.cy], [app.triforcePieces[0].cx, app.triforcePieces[0].cy]) < app.user.width * 2:
                     app.triforcePieces = []
                     app.gameWon = True
-
+        
+        elif app.gameOver and 'r' in keys:
+            startAdventure(app)
 """
 When the key is released the movement in the direction of that key is 0 now.
 """
@@ -1110,6 +1126,9 @@ def onKeyRelease(app, key):
         if key == 'w':
             app.user.cdy = 0
 
+"""
+Checks if the user is hovering over a button
+"""
 def onMouseMove(app, cx, cy):
     if app.gameStarted == False:
         app.cx = cx
@@ -1119,6 +1138,9 @@ def onMouseMove(app, cx, cy):
         else:
             app.changeButton = False
 
+"""
+Checks if the user is pressing a button
+"""
 def onMousePress(app, cx, cy):
     if app.gameStarted == False:
         app.cx = cx
@@ -1130,6 +1152,12 @@ def onMousePress(app, cx, cy):
             app.changeButton = False
 
 """
+Above is the events of key and mouse
+----------------------------------------------------------------------------------------------------
+Below is the drawing for the canvas
+"""
+
+"""
 Draws healthbar for the user.
 """
 def drawHealthBar(app):
@@ -1138,12 +1166,14 @@ def drawHealthBar(app):
     heart = CMUImage(app.spritestrip.crop((467, 382, 487, 402)))
     for i in range(app.user.health):
         drawImage(heart, 50 + i*40, 5)
+
 """
 Draws the base plate where the character walks on.
 """
 def drawBackground(app):
     background = CMUImage(app.tileset.crop((3, 384, 386, 608)))
     drawImage(background, app.boardLeft + 4, app.boardTop + 4)
+
 """
 Draws the walls of the room
 """
@@ -1315,6 +1345,7 @@ def drawStartingScreen(app):
     startImage = CMUImage(image.crop((0, 0, 505, 351)))
     drawImage(startImage, 0, 0)
     drawLabel("Zeldaish Quest", 258, 60, size = 60, font = 'The Wild Breath of Zelda', fill = 'green', bold = True)
+
 """
 This is the button that shows up when the user is not hovering over start button
 """
@@ -1366,6 +1397,9 @@ This draws the game over screen when the user has 0 health.
 def drawGameOver(app):
     drawRect(0, 0, 516, 355, fill = "black", opacity = app.gameOverCounter)
     drawLabel("You Died", 258, 178, size = 60, font = 'The Wild Breath of Zelda', fill = 'red', opacity = app.gameOverCounter, bold = True)
+    drawRect(252, 250, 200, 50, fill = "white", align = "center", opacity = app.gameOverCounter)
+    drawRect(252, 250, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
+    drawLabel("Press r to restart", 252, 250, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
   
 def redrawAll(app):
     if app.gameStarted:
