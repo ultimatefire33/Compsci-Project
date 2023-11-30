@@ -44,6 +44,15 @@ class Enemy:
             self.cx += math.cos(angleToPlayer) * self.speed
             self.cy += math.sin(angleToPlayer) * self.speed
 
+            if self.cx + math.cos(angleToPlayer) * self.speed > 410:
+                self.cx += - (math.cos(angleToPlayer) * self.speed)
+            elif self.cy + math.sin(angleToPlayer) * self.speed > 255:
+                self.cy += - (math.sin(angleToPlayer) * self.speed)
+            elif self.cx + math.sin(angleToPlayer) * self.speed < 65:
+                self.cx += - (math.cos(angleToPlayer) * self.speed)
+            elif self.cy + math.sin(angleToPlayer) * self.speed < 65:
+                self.cy += - (math.sin(angleToPlayer) * self.speed)
+
             for obstacle in obstacles:
                 obstacleVectX = obstacle.cx - self.cx
                 obstacleVectY = obstacle.cy - self.cy
@@ -536,7 +545,7 @@ class Key:
         self.cx = cx
         self.cy = cy
         self.taken = False
-        spritestrip = spritestrip = Image.open('images/zelda_sprite_sheet.png')
+        spritestrip = Image.open('images/zelda_sprite_sheet.png')
         self.sprite = CMUImage(spritestrip.crop((693, 489, 723, 527)))
 
     def drawKey(self):
@@ -688,24 +697,24 @@ def spawnSpecificEnemy(app, numEnemy, enemyType):
 Spawns the obstacles so the enemy won't get clipped into them
 """        
 def spawnObstacles(app):
+    finish = False
+    numMistakes = 0
     numObstacles = 1
     padding = 35
     leftMostSpawn = app.leftMostSpawn + padding
     rightMostSpawn = app.rightMostSpawn - padding
     upMostSpawn = app.upMostSpawn + padding
     lowMostSpawn = app.lowMostSpawn - padding
-    for i in range(numObstacles):
 
+    for i in range(numObstacles):
         cx = random.randint(leftMostSpawn, rightMostSpawn)
         cy = random.randint(upMostSpawn, lowMostSpawn)
-
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
             if (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
                 while (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
-                    cy = random.randint(upMostSpawn, lowMostSpawn)
-                    print(math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]))
+                    cy = random.randint(upMostSpawn, lowMostSpawn)  
         
         for obstacle in app.obstacles:
             hypotObstacle = math.hypot(obstacle.width, obstacle.height)
@@ -905,7 +914,6 @@ projectiles
 """
 def onStep(app):
     if app.gameStarted:
-        print(app.user.cx, app.user.cy)
         app.timerCounter += 1
 
         if app.user.health <= 0:
@@ -1181,13 +1189,6 @@ Draws the walls of the room
 def drawExterior(app):
     exterior = CMUImage(app.tileset.crop((1045, 22, 1550, 375)))
     drawImage(exterior, 0, 0)
-
-"""
-Draw the board outline (with double-thickness).
-"""
-def drawBoardBorder(app):
-  drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
-           fill=None, border='black')
   
 """
 Draws the doors of the room
@@ -1398,13 +1399,12 @@ This draws the game over screen when the user has 0 health.
 def drawGameOver(app):
     drawRect(0, 0, 516, 355, fill = "black", opacity = app.gameOverCounter)
     drawLabel("You Died", 258, 178, size = 60, font = 'The Wild Breath of Zelda', fill = 'red', opacity = app.gameOverCounter, bold = True)
-    drawRect(252, 185, 200, 50, fill = "white", align = "center")
-    drawRect(252, 185, 195, 45, fill = "blue", align = "center")
-    drawLabel("Press r to restart", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+    drawRect(252, 250, 200, 50, fill = "white", align = "center", opacity = app.gameOverCounter)
+    drawRect(252, 250, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
+    drawLabel("Press r to restart", 252, 250, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
   
 def redrawAll(app):
     if app.gameStarted:
-        drawBoardBorder(app)
         drawExterior(app)
         drawBackground(app)
         drawDoorBlocks(app)
