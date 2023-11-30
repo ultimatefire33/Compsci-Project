@@ -688,24 +688,24 @@ def spawnSpecificEnemy(app, numEnemy, enemyType):
 Spawns the obstacles so the enemy won't get clipped into them
 """        
 def spawnObstacles(app):
+    finish = False
+    numMistakes = 0
     numObstacles = 1
     padding = 35
     leftMostSpawn = app.leftMostSpawn + padding
     rightMostSpawn = app.rightMostSpawn - padding
     upMostSpawn = app.upMostSpawn + padding
     lowMostSpawn = app.lowMostSpawn - padding
-    for i in range(numObstacles):
 
+    for i in range(numObstacles):
         cx = random.randint(leftMostSpawn, rightMostSpawn)
         cy = random.randint(upMostSpawn, lowMostSpawn)
-
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
             if (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
                 while (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
-                    cy = random.randint(upMostSpawn, lowMostSpawn)
-                    print(math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]))
+                    cy = random.randint(upMostSpawn, lowMostSpawn)  
         
         for obstacle in app.obstacles:
             hypotObstacle = math.hypot(obstacle.width, obstacle.height)
