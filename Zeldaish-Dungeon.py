@@ -44,6 +44,15 @@ class Enemy:
             self.cx += math.cos(angleToPlayer) * self.speed
             self.cy += math.sin(angleToPlayer) * self.speed
 
+            if self.cx + math.cos(angleToPlayer) * self.speed > 410:
+                self.cx += - (math.cos(angleToPlayer) * self.speed)
+            elif self.cy + math.sin(angleToPlayer) * self.speed > 255:
+                self.cy += - (math.sin(angleToPlayer) * self.speed)
+            elif self.cx + math.sin(angleToPlayer) * self.speed < 65:
+                self.cx += - (math.cos(angleToPlayer) * self.speed)
+            elif self.cy + math.sin(angleToPlayer) * self.speed < 65:
+                self.cy += - (math.sin(angleToPlayer) * self.speed)
+
             for obstacle in obstacles:
                 obstacleVectX = obstacle.cx - self.cx
                 obstacleVectY = obstacle.cy - self.cy
@@ -536,7 +545,7 @@ class Key:
         self.cx = cx
         self.cy = cy
         self.taken = False
-        spritestrip = spritestrip = Image.open('images/zelda_sprite_sheet.png')
+        spritestrip = Image.open('images/zelda_sprite_sheet.png')
         self.sprite = CMUImage(spritestrip.crop((693, 489, 723, 527)))
 
     def drawKey(self):
@@ -1180,13 +1189,6 @@ Draws the walls of the room
 def drawExterior(app):
     exterior = CMUImage(app.tileset.crop((1045, 22, 1550, 375)))
     drawImage(exterior, 0, 0)
-
-"""
-Draw the board outline (with double-thickness).
-"""
-def drawBoardBorder(app):
-  drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
-           fill=None, border='black')
   
 """
 Draws the doors of the room
@@ -1403,7 +1405,6 @@ def drawGameOver(app):
   
 def redrawAll(app):
     if app.gameStarted:
-        drawBoardBorder(app)
         drawExterior(app)
         drawBackground(app)
         drawDoorBlocks(app)
