@@ -590,10 +590,17 @@ class Obstacle:
 onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
+    app.gameStarted = False
+    app.changeButton = False
+    app.cx = 200
+    app.cy = 200
+    
+
+def startAdventure(app):
     app.gameWon = False
     app.levelClear = False
-    app.positionLevel = 8
-    app.level = 8
+    app.level = 1
+    app.positionLevel = 1
     app.stepsPerSecond = 20
     app.boardLeft = 57
     app.boardTop = 60
@@ -654,15 +661,15 @@ This spawns the specific enemy types
 """
 def spawnSpecificEnemy(app, numEnemy, enemyType):
     for i in range(numEnemy):
-        cx = random.randint(app.leftMostSpawn + 50, app.rightMostSpawn - 50)
-        cy = random.randint(app.upMostSpawn + 50, app.lowMostSpawn - 50)
+        cx = random.randint(app.leftMostSpawn + 75, app.rightMostSpawn - 75)
+        cy = random.randint(app.upMostSpawn + 75, app.lowMostSpawn - 75)
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
             hypot = math.hypot(currEnemy.width, currEnemy.height)
-            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot:
-                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypot == True:
-                    cx = random.randint(app.leftMostSpawn + 50, app.rightMostSpawn - 50)
-                    cy = random.randint(app.upMostSpawn + 50, app.lowMostSpawn - 50)
+            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) + 30 < hypot:
+                while math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) + 30 < hypot == True:
+                    cx = random.randint(app.leftMostSpawn + 75, app.rightMostSpawn - 75)
+                    cy = random.randint(app.upMostSpawn + 75, app.lowMostSpawn - 75)
         newEnemy = enemyType(cx, cy)
         app.enemies.append(newEnemy)
         if isinstance(newEnemy, EnemyMage):
@@ -685,16 +692,16 @@ def spawnObstacles(app):
 
         for i in range(len(app.enemies)):
             currEnemy = app.enemies[i]
-            hypotEnemy = math.hypot(currEnemy.width, currEnemy.height)
-            if math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 or math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < currEnemy.width * 8:
-                while (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < hypotEnemy * 8 == True) and (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < currEnemy.width * 8 == True):
+            if (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
+                while (math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]) < 130):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
                     cy = random.randint(upMostSpawn, lowMostSpawn)
+                    print(math.dist([cx, cy], [currEnemy.cx, currEnemy.cy]))
         
         for obstacle in app.obstacles:
             hypotObstacle = math.hypot(obstacle.width, obstacle.height)
-            if (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < hypotObstacle * 8 == True):
-                while (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < hypotObstacle * 8):
+            if (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < 130):
+                while (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < 130):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
                     cy = random.randint(upMostSpawn, lowMostSpawn)
 
@@ -749,7 +756,7 @@ def spawnKeyAndHealth(app):
 
 def goNewRoom(app):
     if len(app.keys) == app.level and app.level == 1:
-        if 189 <= app.user.cx <= 253 and 70 <= app.user.cy <= 85:
+        if 180 <= app.user.cx <= 253 and 65 <= app.user.cy <= 85:
             app.user.cx = 215
             app.user.cy = 235
             app.level = 2
@@ -760,7 +767,7 @@ def goNewRoom(app):
             spawnObstacles(app)
 
     elif len(app.keys) == app.level and app.level == 2:
-        if 75 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
+        if 65 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
             app.user.cx = 390
             app.user.cy = 160
             app.level = 3
@@ -771,7 +778,7 @@ def goNewRoom(app):
             spawnObstacles(app)
 
     elif app.level == 4 and app.positionLevel == 2:
-        if 140 <= app.user.cy <= 175 and 385 <= app.user.cx <= 395:
+        if 140 <= app.user.cy <= 175 and 395 <= app.user.cx <= 410:
             app.user.cx = 75
             app.user.cy = 160
             app.positionLevel = 4 
@@ -782,7 +789,7 @@ def goNewRoom(app):
             app.level = 5    
 
     elif app.positionLevel == 2 and app.level == 5:
-        if 189 <= app.user.cx <= 253 and 70 <= app.user.cy <= 85:
+        if 189 <= app.user.cx <= 253 and 65 <= app.user.cy <= 85:
             app.user.cx = 215
             app.user.cy = 235
             app.positionLevel = 5
@@ -790,7 +797,7 @@ def goNewRoom(app):
             spawnObstacles(app) 
             
     elif app.level == 5 and app.positionLevel == 5 and len(app.keys) == 5:
-        if 140 <= app.user.cy <= 175 and 385 <= app.user.cx <= 395:
+        if 140 <= app.user.cy <= 175 and 385 <= app.user.cx <= 410:
             app.user.cx = 75
             app.user.cy = 160
             app.positionLevel = 6 
@@ -801,7 +808,7 @@ def goNewRoom(app):
             spawnObstacles(app) 
 
     elif app.positionLevel == 5 and len(app.keys) == 6:
-         if 75 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
+         if 65 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
             app.user.cx = 390
             app.user.cy = 160
             app.level = 7
@@ -812,7 +819,7 @@ def goNewRoom(app):
             spawnObstacles(app)
 
     elif app.positionLevel == 5 and app.level == 7 and len(app.keys) == 7:
-        if 189 <= app.user.cx <= 253 and 70 <= app.user.cy <= 85:
+        if 180 <= app.user.cx <= 255 and 65 <= app.user.cy <= 85:
             app.user.cx = 215
             app.user.cy = 235
             app.level = 8
@@ -823,16 +830,9 @@ def goNewRoom(app):
     else:
         goBackPrevious(app)
 
-def goBackPrevious(app):
-    if app.positionLevel == 2 and len(app.keys) >= 2 and 200 <= app.user.cx <= 230 and 240 <= app.user.cy <= 260:
-        app.positionLevel = 1
-        app.obstacles = []
-        app.hearts = []
-        app.user.cx = 235
-        app.user.cy = 75  
-
-    elif len(app.keys) == app.level and app.level == 3:
-        if 145 <= app.user.cy <= 165 and 385 <= app.user.cx <= 395:
+def goBackPrevious(app): 
+    if len(app.keys) == app.level and app.level == 3:
+        if 140 <= app.user.cy <= 170 and 385 <= app.user.cx <= 410:
             app.user.cx = 75
             app.user.cy = 160
             app.positionLevel = 2 
@@ -841,7 +841,7 @@ def goBackPrevious(app):
             app.level = 4
 
     elif app.positionLevel == 3 and app.level > 3:
-         if 145 <= app.user.cy <= 165 and 385 <= app.user.cx <= 395:
+         if 145 <= app.user.cy <= 165 and 385 <= app.user.cx <= 410:
             app.user.cx = 75
             app.user.cy = 160
             app.positionLevel = 2 
@@ -849,7 +849,7 @@ def goBackPrevious(app):
             app.hearts = []
 
     elif app.positionLevel == 4 and app.level > 4:
-        if 75 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
+        if 65 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
             app.user.cx = 400
             app.user.cy = 160
             app.positionLevel = 2
@@ -857,7 +857,7 @@ def goBackPrevious(app):
             app.hearts = []
 
     elif app.level == 6 and app.positionLevel == 6 and len(app.keys) == 6:
-        if 75 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
+        if 65 <= app.user.cx < 85 and 135 <= app.user.cy <= 170:
             app.user.cx = 400
             app.user.cy = 160
             app.positionLevel = 5
@@ -865,7 +865,7 @@ def goBackPrevious(app):
             app.hearts = []
 
     elif app.positionLevel == 7 and app.level == 7 and (len(app.keys)) == 7:
-        if 145 <= app.user.cy <= 165 and 385 <= app.user.cx <= 395:
+        if 145 <= app.user.cy <= 170 and 385 <= app.user.cx <= 410:
             app.user.cx = 75
             app.user.cy = 160
             app.positionLevel = 5
@@ -877,112 +877,114 @@ This keeps track of all timed events and movement of main character, npcs, and
 projectiles
 """
 def onStep(app):
-    app.timerCounter += 1
+    if app.gameStarted:
+        print(app.user.cx, app.user.cy)
+        app.timerCounter += 1
 
-    if app.user.health <= 0:
-        app.gameOver = True
+        if app.user.health <= 0:
+            app.gameOver = True
 
-    if app.gameOver and app.gameOverCounter < 100:
-        app.gameOverCounter += 1
+        if app.gameOver and app.gameOverCounter < 100:
+            app.gameOverCounter += 1
 
-    if app.user.meleeDone != True:
-        if app.user.cdx == 0 and app.user.cdy == 0:
-            app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
-        else:
-            if app.timerCounter % 2 == 0:
-                app.user.spriteCounter = (1 + app.user.spriteCounter) % len(app.user.currSprites)
-    else:
-        app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
-
-    for enemy in app.enemies:
-        if isinstance(enemy, EnemyKnight) or isinstance(enemy, EnemyLynel):
-            if enemy.cdx == 0 and enemy.cdy == 0:
-                enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % 1
+        if app.user.meleeDone != True:
+            if app.user.cdx == 0 and app.user.cdy == 0:
+                app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
             else:
                 if app.timerCounter % 2 == 0:
-                    enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.currSprites)
-
-        elif isinstance(enemy, EnemyMage):
-            for fireball in enemy.fireballs:
-                fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites)
-
-        elif isinstance(enemy, EnemyMummy):
-            if app.timerCounter % 2 == 0:
-                enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.sprites)
-
-        elif isinstance(enemy, EnemySlime) or isinstance(enemy, EnemyLightning):
-            if app.timerCounter % 15 == 0:
-                enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.sprites)
-    
-    for fireball in app.user.fireballs:
-        fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites) 
-
-    if app.timerCounter % 30 == 0:
-        app.fireballShot = False
-        app.user.meleeDone = False
-        app.wait = False
-
-    if app.timerCounter % 30 == 0:
-        app.user.hitCurr = False
-        for mage in app.mageEnemies:
-            mage.createFireball(app.user)  
-
-    if isLegal(app, app.user)and app.user.health > 0:
-        app.user.changePosition()
-
-    for enemy in app.enemies:
-        if isLegal(app, enemy):
-            if enemy.canMove:
-                if isinstance(enemy, EnemySlime):
-                    if app.timerCounter % 15 == 0:
-                        enemy.changePosition(app.user, app.obstacles)
-                elif isinstance(enemy, EnemyLightning):
-                    if app.timerCounter % 2 == 0:
-                        enemy.changePosition()
-                else:
-                    enemy.changePosition(app.user, app.obstacles)
-
-            if app.user.hitCurr == False and enemy.hasMelee:
-                enemy.melee(app.user)
-
-            if app.user.meleeDone == True and app.wait == False:
-                app.user.melee(enemy)
-                if enemy.health <= 0:
-                    app.enemies.remove(enemy)
-                    if len(app.enemies) == 0:
-                        app.levelClear = True
-                    if enemy in app.mageEnemies:
-                        app.mageEnemies.remove(enemy) 
-                app.wait = True
-
-    for fireball in app.user.fireballs:
-        if isLegal(app, fireball) and app.gameOver == False:
-            fireball.changeFireballPos()  
+                    app.user.spriteCounter = (1 + app.user.spriteCounter) % len(app.user.currSprites)
         else:
-            app.user.fireballs.remove(fireball) 
+            app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
 
-    for mage in app.mageEnemies:
-        for fireball in mage.fireballs:
+        for enemy in app.enemies:
+            if isinstance(enemy, EnemyKnight) or isinstance(enemy, EnemyLynel):
+                if enemy.cdx == 0 and enemy.cdy == 0:
+                    enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % 1
+                else:
+                    if app.timerCounter % 2 == 0:
+                        enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.currSprites)
+
+            elif isinstance(enemy, EnemyMage):
+                for fireball in enemy.fireballs:
+                    fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites)
+
+            elif isinstance(enemy, EnemyMummy):
+                if app.timerCounter % 2 == 0:
+                    enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.sprites)
+
+            elif isinstance(enemy, EnemySlime) or isinstance(enemy, EnemyLightning):
+                if app.timerCounter % 15 == 0:
+                    enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.sprites)
+        
+        for fireball in app.user.fireballs:
+            fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites) 
+
+        if app.timerCounter % 30 == 0:
+            app.fireballShot = False
+            app.user.meleeDone = False
+            app.wait = False
+
+        if app.timerCounter % 30 == 0:
+            app.user.hitCurr = False
+            for mage in app.mageEnemies:
+                mage.createFireball(app.user)  
+
+        if isLegal(app, app.user)and app.user.health > 0:
+            app.user.changePosition()
+
+        for enemy in app.enemies:
+            if isLegal(app, enemy):
+                if enemy.canMove:
+                    if isinstance(enemy, EnemySlime):
+                        if app.timerCounter % 15 == 0:
+                            enemy.changePosition(app.user, app.obstacles)
+                    elif isinstance(enemy, EnemyLightning):
+                        if app.timerCounter % 2 == 0:
+                            enemy.changePosition()
+                    else:
+                        enemy.changePosition(app.user, app.obstacles)
+
+                if app.user.hitCurr == False and enemy.hasMelee:
+                    enemy.melee(app.user)
+
+                if app.user.meleeDone == True and app.wait == False:
+                    app.user.melee(enemy)
+                    if enemy.health <= 0:
+                        app.enemies.remove(enemy)
+                        if len(app.enemies) == 0:
+                            app.levelClear = True
+                        if enemy in app.mageEnemies:
+                            app.mageEnemies.remove(enemy) 
+                    app.wait = True
+
+        for fireball in app.user.fireballs:
             if isLegal(app, fireball) and app.gameOver == False:
-                fireball.changeFireballPos()
+                fireball.changeFireballPos()  
             else:
-                mage.fireballs.remove(fireball)
-    
-    levelClearer(app)
-    gameDone(app)
+                app.user.fireballs.remove(fireball) 
+
+        for mage in app.mageEnemies:
+            for fireball in mage.fireballs:
+                if isLegal(app, fireball) and app.gameOver == False:
+                    fireball.changeFireballPos()
+                else:
+                    mage.fireballs.remove(fireball)
+        
+        levelClearer(app)
+        gameDone(app)
 
 """
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
     if isinstance(character, EnemyLightning) == False:
-        if character.cx + character.cdx + character.width > 427:
+        if character.cx + character.cdx  > 410:
             return False
-        if character.cy + character.cdy + character.height > 270:
+        if character.cy + character.cdy > 255:
             return False
-        if character.cx - character.width/2  + character.cdx < app.boardLeft:
+        if character.cx + character.cdx < 65:
             return False
-        if character.cy - character.height/2 + character.cdy < app.boardTop:
+        if character.cy + character.cdy < 65:
             return False
         
         for obstacle in app.obstacles:
@@ -1012,76 +1014,101 @@ This basically gives all the moves of the character and allows for extra stuff d
 I will add those phases later.
 """
 def onKeyHold(app, keys):
-    if app.user.health > 0 or app.gameWon:
-        if len(keys) >= 2:
-            if 'a' in keys and 's' in keys:
-                app.user.cdx = -app.user.speed
-                app.user.cdy = app.user.speed
-            elif 's' in keys and 'd' in keys:
-                app.user.cdx = app.user.speed
-                app.user.cdy = app.user.speed
-            elif 'w' in keys and 'd' in keys:
-                app.user.cdx = app.user.speed
-                app.user.cdy = -app.user.speed
-            elif 'a' in keys and 'w' in keys:
-                app.user.cdx = -app.user.speed
-                app.user.cdy = -app.user.speed
-            elif 'a' in keys and 'd' in keys:
-                app.user.cdx = 0
-                app.user.cdy = 0
-            elif 'w' in keys and 's' in keys:
-                app.user.cdx = 0 
-                app.user.cdy = 0
+    if app.gameStarted:
+        if app.user.health > 0 or app.gameWon:
+            if len(keys) >= 2:
+                if 'a' in keys and 's' in keys:
+                    app.user.cdx = -app.user.speed
+                    app.user.cdy = app.user.speed
+                elif 's' in keys and 'd' in keys:
+                    app.user.cdx = app.user.speed
+                    app.user.cdy = app.user.speed
+                elif 'w' in keys and 'd' in keys:
+                    app.user.cdx = app.user.speed
+                    app.user.cdy = -app.user.speed
+                elif 'a' in keys and 'w' in keys:
+                    app.user.cdx = -app.user.speed
+                    app.user.cdy = -app.user.speed
+                elif 'a' in keys and 'd' in keys:
+                    app.user.cdx = 0
+                    app.user.cdy = 0
+                elif 'w' in keys and 's' in keys:
+                    app.user.cdx = 0 
+                    app.user.cdy = 0
 
-        elif len(keys) == 1:
-            if 'a' in keys:
-                app.user.cdx = -app.user.speed
-                app.user.cdy = 0
-            elif 's' in keys:
-                app.user.cdy = app.user.speed
-                app.user.cdx = 0
-            elif 'd' in keys:
-                app.user.cdx = app.user.speed
-                app.user.cdy = 0
-            elif 'w' in keys:
-                app.user.cdy = -app.user.speed
-                app.user.cdx = 0
+            elif len(keys) == 1:
+                if 'a' in keys:
+                    app.user.cdx = -app.user.speed
+                    app.user.cdy = 0
+                elif 's' in keys:
+                    app.user.cdy = app.user.speed
+                    app.user.cdx = 0
+                elif 'd' in keys:
+                    app.user.cdx = app.user.speed
+                    app.user.cdy = 0
+                elif 'w' in keys:
+                    app.user.cdy = -app.user.speed
+                    app.user.cdx = 0
 
-        if 'f' in keys:
-            if app.fireballShot == False:
-                app.user.createFireball()
-                app.fireballShot = True
+            if 'f' in keys:
+                if app.fireballShot == False:
+                    app.user.createFireball()
+                    app.fireballShot = True
 
-        if 'g' in keys:
-            if app.user.meleeDone == False and app.wait == False:
-                app.user.meleeDone = True
+            if 'g' in keys:
+                if app.user.meleeDone == False and app.wait == False:
+                    app.user.meleeDone = True
 
-        if 'k' in keys:
-            if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width * 2:
-                app.keys.append(app.keyNotPicked[0])
-                app.keyNotPicked[0].taken = True
-                app.keyNotPicked = []
+            if 'k' in keys:
+                if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width * 2:
+                    app.keys.append(app.keyNotPicked[0])
+                    app.keyNotPicked[0].taken = True
+                    app.keyNotPicked = []
 
-        if 'space' in keys:
-            goNewRoom(app)
+            if 'space' in keys:
+                goNewRoom(app)
 
-        if 'h' in keys and app.hearts != []:
-            if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width * 2:
-                app.user.health = 5
-                app.hearts = []
+            if 'h' in keys and app.hearts != []:
+                if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width * 2:
+                    app.user.health = 5
+                    app.hearts = []
+            if 't' in keys and app.triforcePieces != []:
+                if math.dist([app.user.cx, app.user.cy], [app.triforcePieces[0].cx, app.triforcePieces[0].cy]) < app.user.width * 2:
+                    app.triforcePieces = []
+                    app.gameWon = True
 
 """
 When the key is released the movement in the direction of that key is 0 now.
 """
 def onKeyRelease(app, key):
-    if key == 'a':
-       app.user.cdx = 0
-    if key == 's':
-        app.user.cdy = 0
-    if key == 'd':
-        app.user.cdx = 0
-    if key == 'w':
-        app.user.cdy = 0
+    if app.gameStarted == True:
+        if key == 'a':
+            app.user.cdx = 0
+        if key == 's':
+            app.user.cdy = 0
+        if key == 'd':
+            app.user.cdx = 0
+        if key == 'w':
+            app.user.cdy = 0
+
+def onMouseMove(app, cx, cy):
+    if app.gameStarted == False:
+        app.cx = cx
+        app.cy = cy
+        if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
+            app.changeButton = True
+        else:
+            app.changeButton = False
+
+def onMousePress(app, cx, cy):
+    if app.gameStarted == False:
+        app.cx = cx
+        app.cy = cy
+        if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
+            app.gameStarted = True
+            startAdventure(app)
+        else:
+            app.changeButton = False
 
 """
 Draws healthbar for the user.
@@ -1263,13 +1290,43 @@ def drawDoorBlocks(app):
 
 
 def drawStartingScreen(app):
-    pass
+    image = Image.open('images/mainscreen.png')
+    startImage = CMUImage(image.crop((0, 0, 505, 351)))
+    drawImage(startImage, 0, 0)
+    drawLabel("Zeldaish Quest", 258, 60, size = 60, font = 'The Wild Breath of Zelda', fill = 'green', bold = True)
+
+def drawButtonOne(app):
+    drawRect(252, 185, 200, 50, fill = "black", align = "center")
+    drawRect(252, 185, 195, 45, fill = "green", align = "center")
+    drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawButtonTwo(app):
+    drawRect(252, 185, 200, 50, fill = "white", align = "center")
+    drawRect(252, 185, 195, 45, fill = "green", align = "center")
+    drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawSierpinskiTriangle(app, level, x, y, size):
+    # (x,y) is the lower-left corner of the triangle
+    # size is the length of a side
+    # Need a bit of trig to calculate the top point
+    if level == 0:
+        topY = y - (size**2 - (size/2)**2)**0.5
+        drawPolygon(x, y, x+size, y, x+size/2, topY, fill='yellow')
+    else:
+        # Bottom-left triangle
+        drawSierpinskiTriangle(app, level-1, x, y, size/2)
+        # Bottom-right triangle
+        drawSierpinskiTriangle(app, level-1, x+size/2, y, size/2)
+        # Top triangle
+        midY = y - ((size/2)**2 - (size/4)**2)**0.5
+        drawSierpinskiTriangle(app, level-1, x+size/4, midY, size/2)
 
 def drawGameWon(app):
-    image = Image.open('images/end_screen.png')
-    endImage = CMUImage(image.crop((0,0, 505, 351)))
+    drawRect(0, 0, 505, 351, fill = 'yellow')
+    image = Image.open('images/endscreen.png')
+    endImage = CMUImage(image.crop((0, 0, 505, 351)))
     drawImage(endImage, 0, 0)
-    drawLabel("You Won", 258, 178, size = 60, font = 'The Wild Breath of Zelda', fill = 'green')
+    drawLabel("You Won", 258, 290, size = 60, font = 'The Wild Breath of Zelda', fill = 'green')
   
 """
 This draws the game over screen when the user has 0 health.
@@ -1279,40 +1336,47 @@ def drawGameOver(app):
     drawLabel("You Died", 258, 178, size = 60, font = 'The Wild Breath of Zelda', fill = 'red', opacity = app.gameOverCounter, bold = True)
   
 def redrawAll(app):
-    print(app.triforcePieces)
-    drawBoardBorder(app)
-    drawExterior(app)
-    drawBackground(app)
-    drawDoorBlocks(app)
-    drawHealthBar(app)
-    app.user.drawCharacter()
-    for fireball in app.user.fireballs:
-        fireball.drawFireball()
-
-    for key in app.keyNotPicked:
-        key.drawKey()
-
-    for heart in app.hearts:
-        heart.drawHeart()
-
-    for enemy in app.enemies:
-        enemy.drawEnemy()
-
-    for mage in app.mageEnemies:
-        for fireball in mage.fireballs:
+    if app.gameStarted:
+        drawBoardBorder(app)
+        drawExterior(app)
+        drawBackground(app)
+        drawDoorBlocks(app)
+        drawHealthBar(app)
+        app.user.drawCharacter()
+        for fireball in app.user.fireballs:
             fireball.drawFireball()
 
-    for obstacle in app.obstacles:
-        obstacle.drawObstacle()
-    
-    for piece in app.triforcePieces:
-        piece.drawTriforcePiece()
+        for key in app.keyNotPicked:
+            key.drawKey()
 
-    if app.gameOver:
-        drawGameOver(app)
+        for heart in app.hearts:
+            heart.drawHeart()
 
-    if app.gameWon:
-        drawGameWon(app) 
+        for enemy in app.enemies:
+            enemy.drawEnemy()
+
+        for mage in app.mageEnemies:
+            for fireball in mage.fireballs:
+                fireball.drawFireball()
+
+        for obstacle in app.obstacles:
+            obstacle.drawObstacle()
+        
+        for piece in app.triforcePieces:
+            piece.drawTriforcePiece()
+
+        if app.gameOver:
+            drawGameOver(app)
+
+        if app.gameWon:
+            drawGameWon(app) 
+    else:
+        drawStartingScreen(app)
+        if app.changeButton:
+            drawButtonTwo(app)
+            drawSierpinskiTriangle(app, 1, 210, 305, 100)
+        else:
+            drawButtonOne(app)
 
 def main():
     runApp(width = 505, height = 351)
