@@ -595,7 +595,9 @@ def onAppStart(app):
     app.cx = 200
     app.cy = 200
     
-
+"""
+Basically the restart method
+"""
 def startAdventure(app):
     app.gameWon = False
     app.levelClear = False
@@ -708,16 +710,24 @@ def spawnObstacles(app):
         newObstacle = Obstacle(cx, cy)
         app.obstacles.append(newObstacle) 
 
+"""
+This checks after an enemy is defeated whether a level is cleared or not
+"""
 def levelClearer(app):
     if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level != 8):
         spawnKeyAndHealth(app)
         app.levelClear = False
-
+"""
+This checks whether the game is done and spawns the triforce shard if it is
+"""
 def gameDone(app):
     if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level == 8):
         spawnTriforce(app)
         app.levelClear = False
 
+"""
+This spawns the triforce shard after all the enemies are cleared on level 8
+"""
 def spawnTriforce(app):
     padding = 35
     imageHeight = 35
@@ -734,6 +744,9 @@ def spawnTriforce(app):
         tri = TriforcePiece(cxTri, cyTri)
         app.triforcePieces = [tri]
 
+"""
+This spawns the keys and health after each of the levels are cleared
+"""
 def spawnKeyAndHealth(app):
     padding = 35
     imageHeight = 35
@@ -754,6 +767,9 @@ def spawnKeyAndHealth(app):
         heart = Heart(cxHeart, cyHeart)
         app.hearts = [heart]
 
+"""
+This is for the user to progress through the rooms
+"""
 def goNewRoom(app):
     if len(app.keys) == app.level and app.level == 1:
         if 180 <= app.user.cx <= 253 and 65 <= app.user.cy <= 85:
@@ -830,6 +846,9 @@ def goNewRoom(app):
     else:
         goBackPrevious(app)
 
+"""
+This is for the user to go back to the previous level to progress onto the next level
+"""
 def goBackPrevious(app): 
     if len(app.keys) == app.level and app.level == 3:
         if 140 <= app.user.cy <= 170 and 385 <= app.user.cx <= 410:
@@ -1288,23 +1307,33 @@ def drawDoorBlocks(app):
         drawImage(block3, 445, 144)
         drawImage(block4, 222, 1)
 
-
+"""
+This draws the starting screen for the user
+"""
 def drawStartingScreen(app):
     image = Image.open('images/mainscreen.png')
     startImage = CMUImage(image.crop((0, 0, 505, 351)))
     drawImage(startImage, 0, 0)
     drawLabel("Zeldaish Quest", 258, 60, size = 60, font = 'The Wild Breath of Zelda', fill = 'green', bold = True)
-
+"""
+This is the button that shows up when the user is not hovering over start button
+"""
 def drawButtonOne(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
+"""
+This is the button that shows up when the user is hovering over the start button
+"""
 def drawButtonTwo(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
+"""
+This draws the triforce when the start game button is hovered over(Not mine)
+"""
 def drawSierpinskiTriangle(app, level, x, y, size):
     # (x,y) is the lower-left corner of the triangle
     # size is the length of a side
@@ -1321,6 +1350,9 @@ def drawSierpinskiTriangle(app, level, x, y, size):
         midY = y - ((size/2)**2 - (size/4)**2)**0.5
         drawSierpinskiTriangle(app, level-1, x+size/4, midY, size/2)
 
+"""
+If the user beats the game then the game won screen will be drawn
+"""
 def drawGameWon(app):
     drawRect(0, 0, 505, 351, fill = 'yellow')
     image = Image.open('images/endscreen.png')
