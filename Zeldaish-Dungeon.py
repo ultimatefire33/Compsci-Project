@@ -4,6 +4,8 @@ import os, pathlib
 import math
 import random
 import csv
+import pandas as pd
+
 
 """
 This is the parent enemy class that is used for all enemies.
@@ -616,14 +618,22 @@ def onAppStart(app):
     app.soundCreateFireball = loadSound("sounds/shoot_fireball.wav")
     app.soundWin = loadSound("sounds/win.wav")
     app.gameStarted = False
-    app.changeButton = False
+    app.createDungeonRoom = False
+    app.changeButton1 = False
+    app.changeButton2 = False
     app.cx = 200
     app.cy = 200
+    app.width = 505
+    app.height = 351
+    app.acceptDungeon = False
+    app.dungeonName = ""
     
 """
 Basically the restart method
 """
 def startAdventure(app):
+    app.width = 505
+    app.height = 351
     app.gameWon = False
     app.levelClear = False
     app.level = 1
@@ -653,6 +663,44 @@ def startAdventure(app):
     app.tileset = Image.open('images/zelda_tileset.png')
     app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
     spawnEnemies(app)
+
+def createRoom(app):
+    app.tileset = Image.open('images/zelda_tileset.png')
+    app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
+    app.enemysprite = Image.open('images/zelda_enemies_sheet.png')
+    app.boardLeft = 57
+    app.boardTop = 60
+    app.boardWidth = 386
+    app.boardHeight = 227
+    app.width = 605
+    app.height = 451
+    app.enemy1 = CMUImage(app.enemysprite.crop((464, 113, 503, 149)))
+    app.enemy2 = CMUImage(app.enemysprite.crop((231, 348, 266, 387)))
+    app.enemy3 = CMUImage(app.enemysprite.crop((819, 172, 852, 210)))
+    app.enemy4 = CMUImage(app.enemysprite.crop((638, 349, 679, 386)))
+    app.enemy5 = CMUImage(app.enemysprite.crop((741, 350, 779, 384)))
+    app.enemy6 = CMUImage(app.enemysprite.crop((227, 464, 267, 504)))
+    app.obstacleImg = CMUImage(app.tileset.crop((2000, 22, 2035, 55)))
+    app.enemy1Width = 39
+    app.enemy1Height = 36
+    app.enemy2Width = 35
+    app.enemy2Height = 39
+    app.enemy3Width = 33
+    app.enemy3Height = 38
+    app.enemy4Width = 41
+    app.enemy4Height = 37
+    app.enemy5Width = 38
+    app.enemy5Height = 34
+    app.enemy5Width = 40
+    app.enemy5Height = 40
+    app.enemy6Width = 40
+    app.enemy6Height = 40
+    app.obstacleWidth = 35
+    app.obstacleHeight = 33
+    app.dragEnemy = False
+    app.timeToDraw = False
+    app.enemiesNeedDraw = []
+
 
 """
 This spawns the enemies for each level
@@ -1075,6 +1123,9 @@ def loadSound(relativePath):
     # Load Sound file from local URL
     return Sound(url)
 
+def writeFile(app):
+    df = pd.DataFrame(app.enemiesNeedDraw)
+    df.to_csv(app.dungeonName, index = None, header = None)
 
 """
 Above is all the methods relating to the game
@@ -1156,6 +1207,85 @@ def onKeyHold(app, keys):
         
         elif app.gameOver and 'r' in keys:
             startAdventure(app)
+    elif app.acceptDungeon:
+        if 'a' in keys:
+            app.dungeonName += 'a'
+        elif 'b' in keys:
+            app.dungeonName += 'b'
+        elif 'c' in keys:
+            app.dungeonName += 'c'
+        elif 'd' in keys:
+            app.dungeonName += 'd'
+        elif 'e' in keys:
+            app.dungeonName += 'e'
+        elif 'f' in keys:
+            app.dungeonName += 'f'
+        elif 'g' in keys:
+            app.dungeonName += 'g'
+        elif 'h' in keys:
+            app.dungeonName += 'h'
+        elif 'i' in keys:
+            app.dungeonName += 'i'
+        elif 'j' in keys:
+            app.dungeonName += 'j'
+        elif 'k' in keys:
+            app.dungeonName += 'k'
+        elif 'l' in keys:
+            app.dungeonName += 'l'
+        elif 'm' in keys:
+            app.dungeonName += 'm'
+        elif 'n' in keys:
+            app.dungeonName += 'n'
+        elif 'o' in keys:
+            app.dungeonName += 'o'
+        elif 'p' in keys:
+            app.dungeonName += 'p'
+        elif 'q' in keys:
+            app.dungeonName += 'q'
+        elif 'r' in keys:
+            app.dungeonName += 'r'
+        elif 's' in keys:
+            app.dungeonName += 's'
+        elif 't' in keys:
+            app.dungeonName += 't'
+        elif 'u' in keys:
+            app.dungeonName += 'u'
+        elif 'v' in keys:
+            app.dungeonName += 'v'
+        elif 'w' in keys:
+            app.dungeonName += 'w'
+        elif 'x' in keys:
+            app.dungeonName += 'x'
+        elif 'y' in keys:
+            app.dungeonName += 'y'
+        elif 'z' in keys:
+            app.dungeonName += 'z'
+        elif '1' in keys:
+            app.dungeonName += '1'
+        elif '2' in keys:
+            app.dungeonName += '2'
+        elif '3' in keys:
+            app.dungeonName += '3'
+        elif '4' in keys:
+            app.dungeonName += '4'
+        elif '5' in keys:
+            app.dungeonName += '5'
+        elif '6' in keys:
+            app.dungeonName += '6'
+        elif '7' in keys:
+            app.dungeonName += '7'
+        elif '8' in keys:
+            app.dungeonName += '8'
+        elif '9' in keys:
+            app.dungeonName += '9'
+        elif '0' in keys:
+            app.dungeonName += '0'
+        elif 'backspace' in keys:
+            app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1] 
+        elif 'enter' in keys:
+            writeFile(app)
+            app.acceptDungeon = False
+            app.createDungeonRoom = False
 """
 When the key is released the movement in the direction of that key is 0 now.
 """
@@ -1178,22 +1308,74 @@ def onMouseMove(app, cx, cy):
         app.cx = cx
         app.cy = cy
         if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
-            app.changeButton = True
+            app.changeButton1 = True
         else:
-            app.changeButton = False
+            app.changeButton1 = False
+
+        if (152 <= app.cx <= 352) and (100 <= app.cy <= 150):
+            app.changeButton2 = True
+        else:
+            app.changeButton2 = False
 
 """
 Checks if the user is pressing a button
 """
-def onMousePress(app, cx, cy):
-    if app.gameStarted == False:
-        app.cx = cx
-        app.cy = cy
-        if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
-            app.gameStarted = True
+def onMousePress(app, mouseX, mouseY):
+    if app.gameStarted == False and app.createDungeonRoom == False:
+        if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
             startAdventure(app)
+            app.gameStarted = True
+        elif (152 <= mouseX <= 352) and (100 <= mouseY <= 150):
+            createRoom(app)
+            app.createDungeonRoom = True
         else:
-            app.changeButton = False
+            app.changeButton1 = False
+            app.changeButton2 = False
+
+    elif app.createDungeonRoom:
+        if 510 <= mouseX <= 510 + app.enemy1Width and 80 <= mouseY <= 80 + app.enemy1Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy1
+            app.dragCoordinates = None
+        elif 560 <= mouseX <= 560 + app.enemy2Width and 80 <= mouseY <= 80 + app.enemy2Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy2
+            app.dragCoordinates = None
+        elif 510 <= mouseX <= 510 + app.enemy3Width and 160 <= mouseY <= 160 + app.enemy3Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy3
+            app.dragCoordinates = None
+        elif 560 <= mouseX <= 560 + app.enemy4Width and 160 <= mouseY <= 160 + app.enemy4Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy4
+            app.dragCoordinates = None
+        elif 510 <= mouseX <= 510 + app.enemy5Width and 240 <= mouseY <= 240 + app.enemy5Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy5
+            app.dragCoordinates = None
+        elif 560 <= mouseX <= 560 + app.enemy6Width and 240 <= mouseY <= 240 + app.enemy6Height:
+            app.dragEnemy = True
+            app.dragger = app.enemy6
+            app.dragCoordinates = None
+        elif 535 <= mouseX <= 535 + app.obstacleWidth and 310 <= mouseY <= 310 + app.obstacleHeight:
+            app.dragEnemy = True
+            app.dragger = app.obstacleImg
+            app.dragCoordinates = None
+        elif 252.5 <= mouseX <= 352.5 and 373.5 <= mouseY <= 428.5:
+            app.width = 505
+            app.height = 351
+            app.acceptDungeon = True
+        else:
+            app.dragEnemy = False
+            
+def onMouseDrag(app, cx, cy):
+    if app.createDungeonRoom:
+        app.dragCoordinates = (cx, cy)
+
+def onMouseRelease(app, cx, cy):
+    if app.createDungeonRoom and app.dragEnemy:
+        app.enemiesNeedDraw.append([app.dragger, cx, cy])
+        app.dragEnemy = False
 
 """
 Above is the events of key and mouse
@@ -1386,7 +1568,7 @@ def drawStartingScreen(app):
 """
 This is the button that shows up when the user is not hovering over start button
 """
-def drawButtonOne(app):
+def drawButtonGameOne(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
@@ -1394,11 +1576,20 @@ def drawButtonOne(app):
 """
 This is the button that shows up when the user is hovering over the start button
 """
-def drawButtonTwo(app):
+def drawButtonGameTwo(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
+def drawButtonRoom2(app):
+    drawRect(252, 125, 200, 50, fill = "white", align = "center")
+    drawRect(252, 125, 195, 45, fill = "green", align = "center")
+    drawLabel("Create Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawButtonRoom(app):
+    drawRect(252, 125, 200, 50, fill = "black", align = "center")
+    drawRect(252, 125, 195, 45, fill = "green", align = "center")
+    drawLabel("Create Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 """
 This draws the triforce when the start game button is hovered over(Not mine)
 """
@@ -1437,7 +1628,54 @@ def drawGameOver(app):
     drawRect(252, 250, 200, 50, fill = "white", align = "center", opacity = app.gameOverCounter)
     drawRect(252, 250, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
     drawLabel("Press r to restart", 252, 250, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
-  
+
+def dungeonCreatorDoors(app):
+    block1 = CMUImage(app.tileset.crop((1630, 88, 1695, 153)))
+    block2 = CMUImage(app.tileset.crop((1630, 221, 1695, 286)))
+    block3 = CMUImage(app.tileset.crop((1630, 154, 1694, 218)))
+    block4 = CMUImage(app.tileset.crop((1630, 22, 1693, 86)))
+    drawImage(block1, -3, 144)
+    drawImage(block2, 222, 289)
+    drawImage(block3, 444, 144)
+    drawImage(block4, 221, 0)
+
+def drawEnemies(app):
+    drawRect(505, 0, 100, 451, fill = "black")
+    drawLabel("Enemies:", 555, 50, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 20)
+    drawImage(app.enemy1, 510, 80)
+    drawImage(app.enemy2, 560, 80)
+    drawImage(app.enemy3, 510, 160)
+    drawImage(app.enemy4, 560, 160)
+    drawImage(app.enemy5, 510, 240)
+    drawImage(app.enemy6, 560, 240)
+    drawImage(app.obstacleImg, 535, 310)
+
+def dragDrawEnemy(app, enemy, cx, cy):
+    if app.dragEnemy:
+        drawImage(enemy, cx, cy, align = 'center')
+
+def drawReleaseEnemy(app):
+    if app.dragEnemy == False and app.timeToDraw == True:
+        enemyDrag = app.dragger
+        releaseCx, releaseCy = app.releaseCoordinates
+        drawImage(enemyDrag, releaseCx, releaseCy, align = 'center')
+
+def drawAllEnemies(app):
+    for enemy in app.enemiesNeedDraw:
+            drawImage(enemy[0], enemy[1], enemy[2], align = 'center')
+
+def drawAcceptButton(app):
+    drawRect(0, 351, 605, 100, fill = "navy")
+    drawRect(302.5, 401, 110, 55, fill = "white", align = "center")
+    drawRect(302.5, 401, 100, 50, fill = "green", align = "center")
+    drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+
+def drawAcceptButtonScreen(app):
+    drawRect(0, 0, 505, 351, fill = "black")
+    drawRect(252.5, 175.5, 110, 55, fill = "white", align = "center")
+    drawRect(252.5, 175.5, 100, 50, fill = "green", align = "center")
+    drawLabel(app.dungeonName, 252.5, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+    
 def redrawAll(app):
     if app.gameStarted:
         drawExterior(app)
@@ -1471,16 +1709,35 @@ def redrawAll(app):
             drawGameOver(app)
 
         if app.gameWon:
-            drawGameWon(app) 
+            drawGameWon(app)
+    elif app.acceptDungeon:
+        drawAcceptButtonScreen(app)
+
+    elif app.createDungeonRoom:
+        drawExterior(app)
+        drawBackground(app)
+        dungeonCreatorDoors(app)
+        drawEnemies(app)
+        drawAcceptButton(app)
+        if app.dragEnemy and app.dragCoordinates != None:
+            enemyDrag = app.dragger
+            dragCx, dragCy  = app.dragCoordinates
+            dragDrawEnemy(app, enemyDrag, dragCx, dragCy)
+        drawAllEnemies(app)
     else:
         drawStartingScreen(app)
-        if app.changeButton:
-            drawButtonTwo(app)
+        if app.changeButton2:
+            drawButtonRoom2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
-            drawButtonOne(app)
+            drawButtonRoom(app)
+        if app.changeButton1:
+            drawButtonGameTwo(app)
+            drawSierpinskiTriangle(app, 1, 210, 305, 100)
+        else:
+            drawButtonGameOne(app)
 
 def main():
-    runApp(width = 505, height = 351)
+    runApp(width = app.width, height = app.height)
 
 main()
