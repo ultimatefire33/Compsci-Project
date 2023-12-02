@@ -619,18 +619,25 @@ def onAppStart(app):
     app.soundWin = loadSound("sounds/win.wav")
     app.gameStarted = False
     app.createDungeonRoom = False
-    app.changeButton1 = False
-    app.changeButton2 = False
+    app.changeButtonStart = False
+    app.changeButtonRoom = False
     app.cx = 200
     app.cy = 200
     app.width = 505
     app.height = 351
     app.acceptDungeon = False
     app.dungeonName = ""
+    app.goToDungeonScreen = False
+    app.changeButtonLoad = False
+    app.changeButtonCreate = False
+    app.getDungeonName = False
+    app.loadDungeon = False
+    app.allPositions = []
     
 """
 Basically the restart method
 """
+
 def startAdventure(app):
     app.width = 505
     app.height = 351
@@ -700,6 +707,76 @@ def createRoom(app):
     app.dragEnemy = False
     app.timeToDraw = False
     app.enemiesNeedDraw = []
+    app.enemiesForFile = []
+
+
+def startDungeon(app):
+    app.tileset = Image.open('images/zelda_tileset.png')
+    app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
+    app.enemysprite = Image.open('images/zelda_enemies_sheet.png')
+    app.stepsPerSecond = 20
+    app.width = 505
+    app.height = 351
+    app.boardLeft = 57
+    app.boardTop = 60
+    app.boardWidth = 386
+    app.boardHeight = 227
+    app.gameWon = False
+    app.user = Character()
+    app.timerCounter = 0
+    app.fireballShot = False
+    app.enemies = []
+    app.mageEnemies = []
+    app.obstacles = []
+    app.hearts = []
+    app.triforcePieces = []
+    app.gameOver = False
+    app.gameOverCounter = 0
+    app.wait = False
+    app.levelClear = False
+    app.leftMostSpawn = app.boardLeft + 35
+    app.rightMostSpawn = app.boardLeft + app.boardWidth - 35
+    app.upMostSpawn = app.boardTop + 35
+    app.lowMostSpawn = app.boardTop + app.boardHeight - 35
+    spawnEnemiesDungeon(app)
+
+def spawnEnemiesDungeon(app):
+    for enemy in app.allPositions:
+        if app.leftMostSpawn >= int(enemy[1]):
+            continue
+        elif int(enemy[1]) >= app.rightMostSpawn:
+            continue
+        elif app.upMostSpawn >= int(enemy[2]):
+            continue
+        elif int(enemy[2]) >= app.lowMostSpawn:
+            continue
+        else:
+            spawnEnemyDungeon(app, enemy[0], int(enemy[1]), int(enemy[2]))
+        
+
+def spawnEnemyDungeon(app, enemyType, enemyCX, enemyCY):
+    if enemyType == "knight":
+        newEnemy = EnemyKnight(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+    elif enemyType == "mage":
+        newEnemy = EnemyMage(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+        app.mageEnemies.append(newEnemy)
+    elif enemyType == "slime":
+        newEnemy = EnemySlime(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+    elif enemyType == "mummy":
+        newEnemy = EnemyMummy(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+    elif enemyType == "lynel":
+        newEnemy = EnemyLynel(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+    elif enemyType == "lightning":
+        newEnemy = EnemyLightning(enemyCX, enemyCY)
+        app.enemies.append(newEnemy)
+    else:
+        newObstacle = Obstacle(enemyCX, enemyCY)
+        app.obstacles.append(newObstacle)
 
 
 """
@@ -787,18 +864,28 @@ def spawnObstacles(app):
 This checks after an enemy is defeated whether a level is cleared or not
 """
 def levelClearer(app):
-    if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level != 8):
-        spawnKeyAndHealth(app)
-        app.levelClear = False
+    if app.gameStarted:
+        if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level != 8):
+            spawnKeyAndHealth(app)
+            app.levelClear = False
+    else:
+        if (app.levelClear) and len(app.enemies) == 0:
+            gameDone(app)
 
 """
 This checks whether the game is done and spawns the triforce shard if it is
 """
 def gameDone(app):
-    if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level == 8):
-        spawnTriforce(app)
-        app.soundWin.play()
-        app.levelClear = False
+    if app.gameStarted:
+        if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level == 8):
+            spawnTriforce(app)
+            app.soundWin.play()
+            app.levelClear = False
+    elif app.loadDungeon:
+        if app.levelClear == True and len(app.enemies) == 0:
+            spawnTriforce(app)
+            app.soundWin.play()
+            app.levelClear = False
 
 """
 This spawns the triforce shard after all the enemies are cleared on level 8
@@ -971,7 +1058,7 @@ This keeps track of all timed events and movement of main character, npcs, and
 projectiles
 """
 def onStep(app):
-    if app.gameStarted:
+    if app.gameStarted or app.loadDungeon:
         app.timerCounter += 1
 
         if app.user.health <= 0:
@@ -1069,9 +1156,10 @@ def onStep(app):
                     fireball.changeFireballPos()
                 else:
                     mage.fireballs.remove(fireball)
-        
+
         levelClearer(app)
         gameDone(app)
+
 
 """
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
@@ -1124,8 +1212,14 @@ def loadSound(relativePath):
     return Sound(url)
 
 def writeFile(app):
-    df = pd.DataFrame(app.enemiesNeedDraw)
+    df = pd.DataFrame(app.enemiesForFile)
     df.to_csv(app.dungeonName, index = None, header = None)
+
+def readFile(app):
+    with open(app.dungeonName, 'r') as csv_file:
+        csv_reader =  csv.reader(csv_file)
+        for line in csv_reader:
+            app.allPositions.append(line)
 
 """
 Above is all the methods relating to the game
@@ -1138,8 +1232,8 @@ This basically gives all the moves of the character and allows for extra stuff d
 I will add those phases later.
 """
 def onKeyHold(app, keys):
-    if app.gameStarted:
-        if app.user.health > 0 or app.gameWon:
+    if app.gameStarted or app.loadDungeon:
+        if app.user.health > 0:
             if len(keys) >= 2:
                 if 'a' in keys and 's' in keys:
                     app.user.cdx = -app.user.speed
@@ -1185,112 +1279,130 @@ def onKeyHold(app, keys):
                     app.soundMelee.play()
                     app.user.meleeDone = True
 
-            if 'k' in keys:
+            if 'k' in keys and app.gameStarted:
                 if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width * 2:
                     app.keys.append(app.keyNotPicked[0])
                     app.soundOpenDoor.play()
                     app.keyNotPicked[0].taken = True
                     app.keyNotPicked = []
 
-            if 'space' in keys:
+            if 'space' in keys and app.gameStarted:
                 goNewRoom(app)
 
-            if 'h' in keys and app.hearts != []:
+            if 'h' in keys and app.hearts != [] and app.gameStarted:
                 if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width * 2:
                     app.user.health = 5
                     app.soundGetHeart.play()
                     app.hearts = []
+
             if 't' in keys and app.triforcePieces != []:
                 if math.dist([app.user.cx, app.user.cy], [app.triforcePieces[0].cx, app.triforcePieces[0].cy]) < app.user.width * 2:
                     app.triforcePieces = []
                     app.gameWon = True
         
-        elif app.gameOver and 'r' in keys:
+        elif app.gameOver and 'r' in keys and app.gameStarted:
             startAdventure(app)
-    elif app.acceptDungeon:
-        if 'a' in keys:
+        
+        elif app.gameOver and 'r' in keys and app.loadDungeon:
+            startDungeon(app)
+    
+
+def onKeyPress(app, key):
+    if app.acceptDungeon or app.getDungeonName:
+        if 'a' == key:
             app.dungeonName += 'a'
-        elif 'b' in keys:
+        elif 'b' == key:
             app.dungeonName += 'b'
-        elif 'c' in keys:
+        elif 'c' == key:
             app.dungeonName += 'c'
-        elif 'd' in keys:
+        elif 'd' == key:
             app.dungeonName += 'd'
-        elif 'e' in keys:
+        elif 'e' == key:
             app.dungeonName += 'e'
-        elif 'f' in keys:
+        elif 'f' == key:
             app.dungeonName += 'f'
-        elif 'g' in keys:
+        elif 'g' == key:
             app.dungeonName += 'g'
-        elif 'h' in keys:
+        elif 'h' == key:
             app.dungeonName += 'h'
-        elif 'i' in keys:
+        elif 'i' == key:
             app.dungeonName += 'i'
-        elif 'j' in keys:
+        elif 'j' == key:
             app.dungeonName += 'j'
-        elif 'k' in keys:
+        elif 'k' == key:
             app.dungeonName += 'k'
-        elif 'l' in keys:
+        elif 'l' == key:
             app.dungeonName += 'l'
-        elif 'm' in keys:
+        elif 'm' == key:
             app.dungeonName += 'm'
-        elif 'n' in keys:
+        elif 'n' == key:
             app.dungeonName += 'n'
-        elif 'o' in keys:
+        elif 'o' == key:
             app.dungeonName += 'o'
-        elif 'p' in keys:
+        elif 'p' == key:
             app.dungeonName += 'p'
-        elif 'q' in keys:
+        elif 'q' == key:
             app.dungeonName += 'q'
-        elif 'r' in keys:
+        elif 'r' == key:
             app.dungeonName += 'r'
-        elif 's' in keys:
+        elif 's' == key:
             app.dungeonName += 's'
-        elif 't' in keys:
+        elif 't' == key:
             app.dungeonName += 't'
-        elif 'u' in keys:
+        elif 'u' == key:
             app.dungeonName += 'u'
-        elif 'v' in keys:
+        elif 'v' == key:
             app.dungeonName += 'v'
-        elif 'w' in keys:
+        elif 'w' == key:
             app.dungeonName += 'w'
-        elif 'x' in keys:
+        elif 'x' == key:
             app.dungeonName += 'x'
-        elif 'y' in keys:
+        elif 'y' == key:
             app.dungeonName += 'y'
-        elif 'z' in keys:
+        elif 'z' == key:
             app.dungeonName += 'z'
-        elif '1' in keys:
+        elif '1' == key:
             app.dungeonName += '1'
-        elif '2' in keys:
+        elif '2' == key:
             app.dungeonName += '2'
-        elif '3' in keys:
+        elif '3' == key:
             app.dungeonName += '3'
-        elif '4' in keys:
+        elif '4' == key:
             app.dungeonName += '4'
-        elif '5' in keys:
+        elif '5' == key:
             app.dungeonName += '5'
-        elif '6' in keys:
+        elif '6' == key:
             app.dungeonName += '6'
-        elif '7' in keys:
+        elif '7' == key:
             app.dungeonName += '7'
-        elif '8' in keys:
+        elif '8' == key:
             app.dungeonName += '8'
-        elif '9' in keys:
+        elif '9' == key:
             app.dungeonName += '9'
-        elif '0' in keys:
+        elif '0' == key:
             app.dungeonName += '0'
-        elif 'backspace' in keys:
-            app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1] 
-        elif 'enter' in keys:
-            writeFile(app)
-            app.acceptDungeon = False
-            app.createDungeonRoom = False
+        elif 'backspace' == key:
+            app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1]
+ 
+        elif 'enter' == key:
+            if app.acceptDungeon:
+                writeFile(app)
+                app.acceptDungeon = False
+                app.createDungeonRoom = False
+                app.dungeonName = ""
+            elif app.getDungeonName:
+                readFile(app)
+                startDungeon(app)
+                app.loadDungeon = True
+                app.getDungeonName = False
+                app.dungeonName = ""
+                
+                
 """
 When the key is released the movement in the direction of that key is 0 now.
 """
 def onKeyRelease(app, key):
-    if app.gameStarted == True:
+    if app.gameStarted or app.loadDungeon:
         if key == 'a':
             app.user.cdx = 0
         if key == 's':
@@ -1304,33 +1416,58 @@ def onKeyRelease(app, key):
 Checks if the user is hovering over a button
 """
 def onMouseMove(app, cx, cy):
-    if app.gameStarted == False:
+    if app.gameStarted == False and app.goToDungeonScreen == False:
         app.cx = cx
         app.cy = cy
         if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
-            app.changeButton1 = True
+            app.changeButtonStart = True
         else:
-            app.changeButton1 = False
+            app.changeButtonStart = False
 
         if (152 <= app.cx <= 352) and (100 <= app.cy <= 150):
-            app.changeButton2 = True
+            app.changeButtonRoom = True
         else:
-            app.changeButton2 = False
+            app.changeButtonRoom = False
+            
+    if app.goToDungeonScreen:
+        app.cx = cx
+        app.cy = cy
+        if (152 <= app.cx <= 352) and (150 <= app.cy <= 200):
+            app.changeButtonCreate = True
+        else:
+            app.changeButtonCreate = False
+
+        if (152 <= app.cx <= 352) and (100 <= app.cy <= 150):
+            app.changeButtonLoad = True
+        else:
+            app.changeButtonLoad = False
+
 
 """
 Checks if the user is pressing a button
 """
 def onMousePress(app, mouseX, mouseY):
-    if app.gameStarted == False and app.createDungeonRoom == False:
+    if app.gameStarted == False and app.createDungeonRoom == False and app.goToDungeonScreen == False and app.loadDungeon == False and app.getDungeonName == False:
         if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
             startAdventure(app)
             app.gameStarted = True
         elif (152 <= mouseX <= 352) and (100 <= mouseY <= 150):
-            createRoom(app)
-            app.createDungeonRoom = True
+            app.goToDungeonScreen = True
         else:
-            app.changeButton1 = False
-            app.changeButton2 = False
+            app.changeButtonStart = False
+            app.changeButtonRoom = False
+    
+    elif app.goToDungeonScreen:
+        if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
+            createRoom(app)
+            app.goToDungeonScreen = False
+            app.createDungeonRoom = True
+        elif (152 <= mouseX <= 352) and (100 <= mouseY <= 150):
+            app.goToDungeonScreen = False
+            app.getDungeonName = True
+        else:
+            app.changeButtonLoad = False
+            app.changeButtonCreate = False
 
     elif app.createDungeonRoom:
         if 510 <= mouseX <= 510 + app.enemy1Width and 80 <= mouseY <= 80 + app.enemy1Height:
@@ -1375,6 +1512,20 @@ def onMouseDrag(app, cx, cy):
 def onMouseRelease(app, cx, cy):
     if app.createDungeonRoom and app.dragEnemy:
         app.enemiesNeedDraw.append([app.dragger, cx, cy])
+        if app.dragger == app.enemy1:
+            app.enemiesForFile.append(["mage", cx, cy])
+        elif app.dragger == app.enemy2:
+            app.enemiesForFile.append(["knight", cx, cy])
+        elif app.dragger == app.enemy3:
+            app.enemiesForFile.append(["lightning", cx, cy])
+        elif app.dragger == app.enemy4:
+            app.enemiesForFile.append(["mummy", cx, cy])
+        elif app.dragger == app.enemy5:
+            app.enemiesForFile.append(["slime", cx, cy])
+        elif app.dragger == app.enemy6:
+            app.enemiesForFile.append(["lynel", cx, cy])
+        elif app.dragger == app.obstacleImg:
+            app.enemiesForFile.append(["obstacle", cx, cy])
         app.dragEnemy = False
 
 """
@@ -1584,12 +1735,12 @@ def drawButtonGameTwo(app):
 def drawButtonRoom2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
-    drawLabel("Create Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+    drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 def drawButtonRoom(app):
     drawRect(252, 125, 200, 50, fill = "black", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
-    drawLabel("Create Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+    drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 """
 This draws the triforce when the start game button is hovered over(Not mine)
 """
@@ -1670,11 +1821,32 @@ def drawAcceptButton(app):
     drawRect(302.5, 401, 100, 50, fill = "green", align = "center")
     drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
-def drawAcceptButtonScreen(app):
+def drawDungeonNameScreen(app):
     drawRect(0, 0, 505, 351, fill = "black")
-    drawRect(252.5, 175.5, 110, 55, fill = "white", align = "center")
-    drawRect(252.5, 175.5, 100, 50, fill = "green", align = "center")
-    drawLabel(app.dungeonName, 252.5, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+    drawRect(252.5, 175.5, 250, 55, fill = "white", align = "center")
+    drawRect(252.5, 175.5, 240, 50, fill = "green", align = "center")
+    drawLabel('Filename: ', 180, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+    drawLabel(app.dungeonName, 275, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+
+def drawCreateYourRoom1(app):
+    drawRect(252, 185, 200, 50, fill = "black", align = "center")
+    drawRect(252, 185, 195, 45, fill = "green", align = "center")
+    drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawCreateYourRoom2(app):
+    drawRect(252, 185, 200, 50, fill = "white", align = "center")
+    drawRect(252, 185, 195, 45, fill = "green", align = "center")
+    drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawLoadYourRoom1(app):
+    drawRect(252, 125, 200, 50, fill = "black", align = "center")
+    drawRect(252, 125, 195, 45, fill = "green", align = "center")
+    drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawLoadYourRoom2(app):
+    drawRect(252, 125, 200, 50, fill = "white", align = "center")
+    drawRect(252, 125, 195, 45, fill = "green", align = "center")
+    drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
     
 def redrawAll(app):
     if app.gameStarted:
@@ -1710,8 +1882,53 @@ def redrawAll(app):
 
         if app.gameWon:
             drawGameWon(app)
-    elif app.acceptDungeon:
-        drawAcceptButtonScreen(app)
+            
+    elif app.loadDungeon:
+        drawExterior(app)
+        drawBackground(app)
+        dungeonCreatorDoors(app)
+        drawHealthBar(app)
+        app.user.drawCharacter()
+        for fireball in app.user.fireballs:
+            fireball.drawFireball()
+
+        for heart in app.hearts:
+            heart.drawHeart()
+
+        for enemy in app.enemies:
+            enemy.drawEnemy()
+
+        for mage in app.mageEnemies:
+            for fireball in mage.fireballs:
+                fireball.drawFireball()
+
+        for obstacle in app.obstacles:
+            obstacle.drawObstacle()
+        
+        for piece in app.triforcePieces:
+            piece.drawTriforcePiece()
+
+        if app.gameOver:
+            drawGameOver(app)
+
+        if app.gameWon:
+            drawGameWon(app)
+
+    elif app.goToDungeonScreen:
+        drawStartingScreen(app)
+        if app.changeButtonLoad:
+            drawLoadYourRoom2(app)
+            drawSierpinskiTriangle(app, 1, 210, 305, 100)
+        else:
+            drawLoadYourRoom1(app)
+        if app.changeButtonCreate:
+            drawCreateYourRoom2(app)
+            drawSierpinskiTriangle(app, 1, 210, 305, 100)
+        else:
+            drawCreateYourRoom1(app)
+
+    elif app.acceptDungeon or app.getDungeonName:
+        drawDungeonNameScreen(app)
 
     elif app.createDungeonRoom:
         drawExterior(app)
@@ -1724,14 +1941,15 @@ def redrawAll(app):
             dragCx, dragCy  = app.dragCoordinates
             dragDrawEnemy(app, enemyDrag, dragCx, dragCy)
         drawAllEnemies(app)
+
     else:
         drawStartingScreen(app)
-        if app.changeButton2:
+        if app.changeButtonRoom:
             drawButtonRoom2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
             drawButtonRoom(app)
-        if app.changeButton1:
+        if app.changeButtonStart:
             drawButtonGameTwo(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
