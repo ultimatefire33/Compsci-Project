@@ -3,6 +3,7 @@ from PIL import Image
 import os, pathlib
 import math
 import random
+import csv
 
 """
 This is the parent enemy class that is used for all enemies.
@@ -606,6 +607,14 @@ Below is methods relating to the game
 onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
+    app.soundMelee = loadSound("sounds/sword_slash.wav")
+    app.soundEnemyDie = loadSound("sounds/enemy_die.wav")
+    app.soundLinkHurt = loadSound("sounds/link_hurt.wav")
+    app.soundLinkDie = loadSound("sounds/link_die.wav")
+    app.soundGetHeart = loadSound("sounds/get_heart.wav")
+    app.soundOpenDoor = loadSound("sounds/door_unlock.wav")
+    app.soundCreateFireball = loadSound("sounds/shoot_fireball.wav")
+    app.soundWin = loadSound("sounds/win.wav")
     app.gameStarted = False
     app.changeButton = False
     app.cx = 200
@@ -740,6 +749,7 @@ This checks whether the game is done and spawns the triforce shard if it is
 def gameDone(app):
     if (app.levelClear == True) and (len(app.enemies) == 0) and (app.level == 8):
         spawnTriforce(app)
+        app.soundWin.play()
         app.levelClear = False
 
 """
@@ -963,6 +973,7 @@ def onStep(app):
             app.user.hitCurr = False
             for mage in app.mageEnemies:
                 mage.createFireball(app.user)  
+                app.soundCreateFireball.play()
 
         if isLegal(app, app.user)and app.user.health > 0:
             app.user.changePosition()
@@ -979,13 +990,19 @@ def onStep(app):
                     else:
                         enemy.changePosition(app.user, app.obstacles)
 
-                if app.user.hitCurr == False and enemy.hasMelee:
+                dist = math.dist([enemy.cx, enemy.cy], [app.user.cx, app.user.cy])
+                if app.user.hitCurr == False and enemy.hasMelee and dist < enemy.width and app.gameOver == False:
                     enemy.melee(app.user)
+                    if app.user.health <= 0:
+                        app.soundLinkDie.play()
+                    else:
+                        app.soundLinkHurt.play()
 
                 if app.user.meleeDone == True and app.wait == False:
                     app.user.melee(enemy)
                     if enemy.health <= 0:
                         app.enemies.remove(enemy)
+                        app.soundEnemyDie.play()
                         if len(app.enemies) == 0:
                             app.levelClear = True
                         if enemy in app.mageEnemies:
@@ -1033,6 +1050,7 @@ def isLegal(app, character):
                     enemy.health -= 1
                     if enemy.health <= 0:
                         app.enemies.remove(enemy)
+                        app.soundEnemyDie.play()
                         if len(app.enemies) == 0:
                             app.levelClear = True
                         if enemy in app.mageEnemies:
@@ -1041,8 +1059,21 @@ def isLegal(app, character):
         else:
             if math.dist([character.cx, character.cy], [app.user.cx, app.user.cy]) < app.user.width:
                 app.user.health -= 1
+                if app.user.health <= 0:
+                    app.soundLinkDie.play()
+                else:
+                    app.soundLinkHurt.play()
                 return False       
     return True
+
+
+def loadSound(relativePath):
+    # Convert to absolute path (because pathlib.Path only takes absolute paths)
+    absolutePath = os.path.abspath(relativePath)
+    # Get local file URL
+    url = pathlib.Path(absolutePath).as_uri()
+    # Load Sound file from local URL
+    return Sound(url)
 
 
 """
@@ -1096,14 +1127,17 @@ def onKeyHold(app, keys):
                 if app.fireballShot == False:
                     app.user.createFireball()
                     app.fireballShot = True
+                    app.soundCreateFireball.play()
 
             if 'g' in keys:
                 if app.user.meleeDone == False and app.wait == False:
+                    app.soundMelee.play()
                     app.user.meleeDone = True
 
             if 'k' in keys:
                 if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width * 2:
                     app.keys.append(app.keyNotPicked[0])
+                    app.soundOpenDoor.play()
                     app.keyNotPicked[0].taken = True
                     app.keyNotPicked = []
 
@@ -1113,6 +1147,7 @@ def onKeyHold(app, keys):
             if 'h' in keys and app.hearts != []:
                 if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width * 2:
                     app.user.health = 5
+                    app.soundGetHeart.play()
                     app.hearts = []
             if 't' in keys and app.triforcePieces != []:
                 if math.dist([app.user.cx, app.user.cy], [app.triforcePieces[0].cx, app.triforcePieces[0].cy]) < app.user.width * 2:
