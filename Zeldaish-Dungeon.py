@@ -19,6 +19,7 @@ class Enemy:
         self.height = 30
         self.width = 30
         self.speed = 0
+        self.meleeDamage = 1
         self.hasMelee = False
         self.canMove = False
 
@@ -26,7 +27,7 @@ class Enemy:
         if self.hasMelee:
             totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
             if totalDistance <= self.width:
-                user.health -= 1
+                user.health -= self.meleeDamage
                 user.hitCurr = True 
 
     def changePosition(self, user, obstacles):
@@ -508,6 +509,8 @@ class EnemyLynel(Enemy):
         self.canMove = True
         self.width = 38
         self.height = 39
+        self.speed = 3
+        self.meleeDamage = 2
         for i in range(4):
             for j in range(2):
                 self.sprite = CMUImage(spritestrip.crop((230+60*i, 465 + 60*j, 268+60*i, 504 + 60*j)))
@@ -706,6 +709,7 @@ def createRoom(app):
     app.obstacleHeight = 33
     app.dragEnemy = False
     app.timeToDraw = False
+    app.drawOtherVer = False
     app.enemiesNeedDraw = []
     app.enemiesForFile = []
 
@@ -1107,8 +1111,9 @@ def onStep(app):
         if app.timerCounter % 30 == 0:
             app.user.hitCurr = False
             for mage in app.mageEnemies:
-                mage.createFireball(app.user)  
-                app.soundCreateFireball.play()
+                if app.user.health > 0:
+                    mage.createFireball(app.user)  
+                    app.soundCreateFireball.play()
 
         if isLegal(app, app.user)and app.user.health > 0:
             app.user.changePosition()
@@ -1202,7 +1207,9 @@ def isLegal(app, character):
                 return False       
     return True
 
-
+"""
+Loads the sounds for the moves, character, and enemies
+"""
 def loadSound(relativePath):
     # Convert to absolute path (because pathlib.Path only takes absolute paths)
     absolutePath = os.path.abspath(relativePath)
@@ -1211,10 +1218,16 @@ def loadSound(relativePath):
     # Load Sound file from local URL
     return Sound(url)
 
+"""
+Writes to a file given a 2d list
+"""
 def writeFile(app):
     df = pd.DataFrame(app.enemiesForFile)
     df.to_csv(app.dungeonName, index = None, header = None)
 
+"""
+Reads from a file given a txt file
+"""
 def readFile(app):
     with open(app.dungeonName, 'r') as csv_file:
         csv_reader =  csv.reader(csv_file)
@@ -1305,62 +1318,64 @@ def onKeyHold(app, keys):
         
         elif app.gameOver and 'r' in keys and app.loadDungeon:
             startDungeon(app)
-    
 
+"""
+Gives user the ability to type and enter a filename
+"""
 def onKeyPress(app, key):
     if app.acceptDungeon or app.getDungeonName:
         if 'a' == key:
-            app.dungeonName += 'a'
+            app.dungeonName += key
         elif 'b' == key:
-            app.dungeonName += 'b'
+            app.dungeonName += key
         elif 'c' == key:
-            app.dungeonName += 'c'
+            app.dungeonName += key
         elif 'd' == key:
-            app.dungeonName += 'd'
+            app.dungeonName += key
         elif 'e' == key:
-            app.dungeonName += 'e'
+            app.dungeonName += key
         elif 'f' == key:
-            app.dungeonName += 'f'
+            app.dungeonName += key
         elif 'g' == key:
-            app.dungeonName += 'g'
+            app.dungeonName += key
         elif 'h' == key:
-            app.dungeonName += 'h'
+            app.dungeonName += key
         elif 'i' == key:
-            app.dungeonName += 'i'
+            app.dungeonName += key
         elif 'j' == key:
-            app.dungeonName += 'j'
+            app.dungeonName += key
         elif 'k' == key:
-            app.dungeonName += 'k'
+            app.dungeonName += key
         elif 'l' == key:
-            app.dungeonName += 'l'
+            app.dungeonName += key
         elif 'm' == key:
-            app.dungeonName += 'm'
+            app.dungeonName += key
         elif 'n' == key:
-            app.dungeonName += 'n'
+            app.dungeonName += key
         elif 'o' == key:
-            app.dungeonName += 'o'
+            app.dungeonName += key
         elif 'p' == key:
-            app.dungeonName += 'p'
+            app.dungeonName += key
         elif 'q' == key:
-            app.dungeonName += 'q'
+            app.dungeonName += key
         elif 'r' == key:
-            app.dungeonName += 'r'
+            app.dungeonName += key
         elif 's' == key:
-            app.dungeonName += 's'
+            app.dungeonName += key
         elif 't' == key:
-            app.dungeonName += 't'
+            app.dungeonName += key
         elif 'u' == key:
-            app.dungeonName += 'u'
+            app.dungeonName += key
         elif 'v' == key:
-            app.dungeonName += 'v'
+            app.dungeonName += key
         elif 'w' == key:
-            app.dungeonName += 'w'
+            app.dungeonName += key
         elif 'x' == key:
-            app.dungeonName += 'x'
+            app.dungeonName += key
         elif 'y' == key:
-            app.dungeonName += 'y'
+            app.dungeonName += key
         elif 'z' == key:
-            app.dungeonName += 'z'
+            app.dungeonName += key
         elif '1' == key:
             app.dungeonName += '1'
         elif '2' == key:
@@ -1383,7 +1398,6 @@ def onKeyPress(app, key):
             app.dungeonName += '0'
         elif 'backspace' == key:
             app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1]
- 
         elif 'enter' == key:
             if app.acceptDungeon:
                 writeFile(app)
@@ -1396,7 +1410,6 @@ def onKeyPress(app, key):
                 app.loadDungeon = True
                 app.getDungeonName = False
                 app.dungeonName = ""
-                
                 
 """
 When the key is released the movement in the direction of that key is 0 now.
@@ -1428,6 +1441,14 @@ def onMouseMove(app, cx, cy):
             app.changeButtonRoom = True
         else:
             app.changeButtonRoom = False
+
+    if app.createDungeonRoom:
+        app.cx = cx
+        app.cy = cy
+        if 252.5 <= cx <= 352.5 and 373.5 <= cy <= 428.5:
+            app.drawOtherVer = True
+        else:
+            app.drawOtherVer = False
             
     if app.goToDungeonScreen:
         app.cx = cx
@@ -1504,11 +1525,18 @@ def onMousePress(app, mouseX, mouseY):
             app.acceptDungeon = True
         else:
             app.dragEnemy = False
-            
+
+"""
+User can drag the enemies they want into the dungeon room
+"""        
 def onMouseDrag(app, cx, cy):
     if app.createDungeonRoom:
         app.dragCoordinates = (cx, cy)
 
+"""
+This places the enemy into the dungeon room and also appends the two lists for the enemies that will need to be drawn currently 
+and the enemies that will be placed into the dungeon file
+"""
 def onMouseRelease(app, cx, cy):
     if app.createDungeonRoom and app.dragEnemy:
         app.enemiesNeedDraw.append([app.dragger, cx, cy])
@@ -1719,7 +1747,7 @@ def drawStartingScreen(app):
 """
 This is the button that shows up when the user is not hovering over start button
 """
-def drawButtonGameOne(app):
+def drawStartGameOne(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
@@ -1727,17 +1755,23 @@ def drawButtonGameOne(app):
 """
 This is the button that shows up when the user is hovering over the start button
 """
-def drawButtonGameTwo(app):
+def drawStartGameTwo(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
-def drawButtonRoom2(app):
+"""
+This is the when the user hovers over the button on the start screen for room maker 
+"""
+def drawRoomMakerButton2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
-def drawButtonRoom(app):
+"""
+This is when the user doesnt hover over the room maker button on the start screen
+"""
+def drawRoomMakerButton(app):
     drawRect(252, 125, 200, 50, fill = "black", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
@@ -1780,6 +1814,9 @@ def drawGameOver(app):
     drawRect(252, 250, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
     drawLabel("Press r to restart", 252, 250, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
 
+"""
+Draws the dungeon doors for the build dungeon 
+"""
 def dungeonCreatorDoors(app):
     block1 = CMUImage(app.tileset.crop((1630, 88, 1695, 153)))
     block2 = CMUImage(app.tileset.crop((1630, 221, 1695, 286)))
@@ -1790,7 +1827,10 @@ def dungeonCreatorDoors(app):
     drawImage(block3, 444, 144)
     drawImage(block4, 221, 0)
 
-def drawEnemies(app):
+"""
+Draws the enemy images which the user will interact with on the build dungeon
+"""
+def drawEnemiesIdle(app):
     drawRect(505, 0, 100, 451, fill = "black")
     drawLabel("Enemies:", 555, 50, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 20)
     drawImage(app.enemy1, 510, 80)
@@ -1801,49 +1841,89 @@ def drawEnemies(app):
     drawImage(app.enemy6, 560, 240)
     drawImage(app.obstacleImg, 535, 310)
 
+
+"""
+Places enemy on cx and cy of mouse when user is trying to get enemy for a dungeon
+"""
 def dragDrawEnemy(app, enemy, cx, cy):
     if app.dragEnemy:
         drawImage(enemy, cx, cy, align = 'center')
 
+"""
+Places enemy on cx and cy of the release of mouse when user is trying to get an enemy for the dungeon
+"""
 def drawReleaseEnemy(app):
     if app.dragEnemy == False and app.timeToDraw == True:
         enemyDrag = app.dragger
         releaseCx, releaseCy = app.releaseCoordinates
         drawImage(enemyDrag, releaseCx, releaseCy, align = 'center')
 
+"""
+This draws every enemy on the board that the user has placed
+"""
 def drawAllEnemies(app):
     for enemy in app.enemiesNeedDraw:
             drawImage(enemy[0], enemy[1], enemy[2], align = 'center')
 
+"""
+This draws the accept dungeon button on the create dungeon screen
+"""
 def drawAcceptButton(app):
+    drawRect(0, 351, 605, 100, fill = "navy")
+    drawRect(302.5, 401, 110, 55, fill = "black", align = "center")
+    drawRect(302.5, 401, 100, 50, fill = "green", align = "center")
+    drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
+
+"""
+This draws the accept dungeon button on the create dungeon screen when the user hovers over it
+"""
+def drawAcceptButton2(app):
     drawRect(0, 351, 605, 100, fill = "navy")
     drawRect(302.5, 401, 110, 55, fill = "white", align = "center")
     drawRect(302.5, 401, 100, 50, fill = "green", align = "center")
     drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
+"""
+This is for when the user is entering a name for reading or writing a file
+"""
 def drawDungeonNameScreen(app):
-    drawRect(0, 0, 505, 351, fill = "black")
+    loadImgNotMade = Image.open('images/loadingImage.jpg')
+    loadImg = CMUImage(loadImgNotMade.crop((0, 0, 505, 351)))
+    drawImage(loadImg, 0, 0)
+    drawLabel("Loading...", 100, 40, fill = "white", font = "The Wild Breath of Zelda", bold = True, size = 50)
     drawRect(252.5, 175.5, 250, 55, fill = "white", align = "center")
     drawRect(252.5, 175.5, 240, 50, fill = "green", align = "center")
     drawLabel('Filename: ', 180, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
     drawLabel(app.dungeonName, 275, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
-def drawCreateYourRoom1(app):
+"""
+This draws the button for create room on idle
+"""
+def drawCreateYourRoomButton1(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
-def drawCreateYourRoom2(app):
+"""
+This draws the button for create room when the user hovers over it
+"""
+def drawCreateYourRoomButton2(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
     drawRect(252, 185, 195, 45, fill = "green", align = "center")
     drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
-def drawLoadYourRoom1(app):
+"""
+This draws the button for load room when on idle
+"""
+def drawLoadYourRoomButton1(app):
     drawRect(252, 125, 200, 50, fill = "black", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
-def drawLoadYourRoom2(app):
+"""
+This draws the button for load when when the user hovers over it
+"""
+def drawLoadYourRoomButton2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
@@ -1917,15 +1997,15 @@ def redrawAll(app):
     elif app.goToDungeonScreen:
         drawStartingScreen(app)
         if app.changeButtonLoad:
-            drawLoadYourRoom2(app)
+            drawLoadYourRoomButton2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
-            drawLoadYourRoom1(app)
+            drawLoadYourRoomButton1(app)
         if app.changeButtonCreate:
-            drawCreateYourRoom2(app)
+            drawCreateYourRoomButton2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
-            drawCreateYourRoom1(app)
+            drawCreateYourRoomButton1(app)
 
     elif app.acceptDungeon or app.getDungeonName:
         drawDungeonNameScreen(app)
@@ -1934,8 +2014,11 @@ def redrawAll(app):
         drawExterior(app)
         drawBackground(app)
         dungeonCreatorDoors(app)
-        drawEnemies(app)
-        drawAcceptButton(app)
+        drawEnemiesIdle(app)
+        if app.drawOtherVer:
+            drawAcceptButton2(app)
+        else:
+            drawAcceptButton(app)
         if app.dragEnemy and app.dragCoordinates != None:
             enemyDrag = app.dragger
             dragCx, dragCy  = app.dragCoordinates
@@ -1945,15 +2028,15 @@ def redrawAll(app):
     else:
         drawStartingScreen(app)
         if app.changeButtonRoom:
-            drawButtonRoom2(app)
+            drawRoomMakerButton2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
-            drawButtonRoom(app)
+            drawRoomMakerButton(app)
         if app.changeButtonStart:
-            drawButtonGameTwo(app)
+            drawStartGameTwo(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
         else:
-            drawButtonGameOne(app)
+            drawStartGameOne(app)
 
 def main():
     runApp(width = app.width, height = app.height)
