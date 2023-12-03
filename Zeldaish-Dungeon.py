@@ -22,6 +22,8 @@ class Enemy:
         self.meleeDamage = 1
         self.hasMelee = False
         self.canMove = False
+        self.checkShoot = False
+        self.shouldNotShoot = False
 
     def melee(self, user):
         if self.hasMelee:
@@ -35,6 +37,9 @@ class Enemy:
             directionVectX =  self.cx - user.cx
             directionVectY = self.cy - user.cy
             totalDistance = math.hypot(directionVectX, directionVectY)
+            self.checkShoot = False
+            self.shouldNotShoot = False
+
             if totalDistance > self.width:
                 self.speed = 2
                 self.cdx = directionVectX / totalDistance
@@ -62,15 +67,24 @@ class Enemy:
                 obstacleVectY = obstacle.cy - self.cy
                 obstacleDistance = math.hypot(obstacleVectX, obstacleVectY)
                 
-                if obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer > math.pi/2:
+                if abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/4:
+                    self.checkShoot = True
+
+                if obstacleDistance < 60 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer > math.pi/2:
                     changeAngle = math.atan2(obstacleVectY, obstacleVectX) + math.pi / 2
                     self.cx += math.cos(changeAngle) * self.speed * 2
                     self.cy += math.sin(changeAngle) * self.speed * 2
 
-                elif obstacleDistance < 100 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer < math.pi/2:
+                elif obstacleDistance < 60 and abs(math.atan2(obstacleVectY, obstacleVectX) - angleToPlayer) < math.pi/2 and angleToPlayer < math.pi/2:
                     changeAngle = math.atan2(obstacleVectY, obstacleVectX) - math.pi / 2
                     self.cx += math.cos(changeAngle) * self.speed * 2
                     self.cy += math.sin(changeAngle) * self.speed * 2
+            
+            if self.checkShoot:
+                self.shouldNotShoot = True
+            else:
+                self.shouldNotShoot = False
+
         else:
             self.cdx = 0
             self.cdy = 0
@@ -503,6 +517,9 @@ class EnemyLynel(Enemy):
         spritestrip = Image.open('images/zelda_enemies_sheet.png')
         self.sprites = []
         self.currSprites = []
+        self.fireballCDX = 0
+        self.fireballCDY = 0
+        self.fireballs = []
         self.spriteCounterEnemy = 0
         self.collision = False
         self.hasMelee = True
@@ -541,6 +558,14 @@ class EnemyLynel(Enemy):
             self.currSprites = self.sprites[2:4]
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
+
+    def createFireball(self, user):
+        if self.shouldNotShoot == False:
+            totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
+            self.fireballCDX = ((user.cx - self.cx) / totalDistance)
+            self.fireballCDY = ((user.cy - self.cy) / totalDistance) 
+            newFireball = Fireball(self.cx, self.cy, self.fireballCDX, self.fireballCDY, True)
+            self.fireballs.append(newFireball)
 
 """
 Key spawns that leads to next room and happens every time the enemies in the room you
@@ -657,7 +682,7 @@ def startAdventure(app):
     app.timerCounter = 0
     app.fireballShot = False
     app.enemies = []
-    app.mageEnemies = []
+    app.fireuserEnemies = []
     app.obstacles = []
     app.keys = []
     app.hearts = []
@@ -730,7 +755,7 @@ def startDungeon(app):
     app.timerCounter = 0
     app.fireballShot = False
     app.enemies = []
-    app.mageEnemies = []
+    app.fireuserEnemies = []
     app.obstacles = []
     app.hearts = []
     app.triforcePieces = []
@@ -765,7 +790,7 @@ def spawnEnemyDungeon(app, enemyType, enemyCX, enemyCY):
     elif enemyType == "mage":
         newEnemy = EnemyMage(enemyCX, enemyCY)
         app.enemies.append(newEnemy)
-        app.mageEnemies.append(newEnemy)
+        app.fireuserEnemies.append(newEnemy)
     elif enemyType == "slime":
         newEnemy = EnemySlime(enemyCX, enemyCY)
         app.enemies.append(newEnemy)
@@ -775,6 +800,7 @@ def spawnEnemyDungeon(app, enemyType, enemyCX, enemyCY):
     elif enemyType == "lynel":
         newEnemy = EnemyLynel(enemyCX, enemyCY)
         app.enemies.append(newEnemy)
+        app.fireuserEnemies.append(newEnemy)
     elif enemyType == "lightning":
         newEnemy = EnemyLightning(enemyCX, enemyCY)
         app.enemies.append(newEnemy)
@@ -811,6 +837,7 @@ def spawnEnemies(app):
     if app.level == 8:
         spawnSpecificEnemy(app, 1, EnemyMage)
         spawnSpecificEnemy(app, 1, EnemyLynel)
+        
 
 """
 This spawns the specific enemy types
@@ -828,8 +855,8 @@ def spawnSpecificEnemy(app, numEnemy, enemyType):
                     cy = random.randint(app.upMostSpawn + 75, app.lowMostSpawn - 75)
         newEnemy = enemyType(cx, cy)
         app.enemies.append(newEnemy)
-        if isinstance(newEnemy, EnemyMage):
-            app.mageEnemies.append(newEnemy)
+        if isinstance(newEnemy, EnemyMage) or isinstance(newEnemy, EnemyLynel):
+            app.fireuserEnemies.append(newEnemy)
 
 """
 Spawns the obstacles so the enemy won't get clipped into them
@@ -1110,10 +1137,11 @@ def onStep(app):
 
         if app.timerCounter % 30 == 0:
             app.user.hitCurr = False
-            for mage in app.mageEnemies:
+            for fireuser in app.fireuserEnemies:
                 if app.user.health > 0:
-                    mage.createFireball(app.user)  
-                    app.soundCreateFireball.play()
+                    if fireuser.shouldNotShoot == False:
+                        fireuser.createFireball(app.user)  
+                        app.soundCreateFireball.play()
 
         if isLegal(app, app.user)and app.user.health > 0:
             app.user.changePosition()
@@ -1145,8 +1173,8 @@ def onStep(app):
                         app.soundEnemyDie.play()
                         if len(app.enemies) == 0:
                             app.levelClear = True
-                        if enemy in app.mageEnemies:
-                            app.mageEnemies.remove(enemy) 
+                        if enemy in app.fireuserEnemies:
+                            app.fireuserEnemies.remove(enemy) 
                     app.wait = True
 
         for fireball in app.user.fireballs:
@@ -1155,12 +1183,12 @@ def onStep(app):
             else:
                 app.user.fireballs.remove(fireball) 
 
-        for mage in app.mageEnemies:
-            for fireball in mage.fireballs:
+        for fireuser in app.fireuserEnemies:
+            for fireball in fireuser.fireballs:
                 if isLegal(app, fireball) and app.gameOver == False:
                     fireball.changeFireballPos()
                 else:
-                    mage.fireballs.remove(fireball)
+                    fireuser.fireballs.remove(fireball)
 
         levelClearer(app)
         gameDone(app)
@@ -1194,8 +1222,8 @@ def isLegal(app, character):
                         app.soundEnemyDie.play()
                         if len(app.enemies) == 0:
                             app.levelClear = True
-                        if enemy in app.mageEnemies:
-                            app.mageEnemies.remove(enemy) 
+                        if enemy in app.fireuserEnemies:
+                            app.fireuserEnemies.remove(enemy) 
                     return False
         else:
             if math.dist([character.cx, character.cy], [app.user.cx, app.user.cy]) < app.user.width:
@@ -1947,8 +1975,8 @@ def redrawAll(app):
         for enemy in app.enemies:
             enemy.drawEnemy()
 
-        for mage in app.mageEnemies:
-            for fireball in mage.fireballs:
+        for fireuser in app.fireuserEnemies:
+            for fireball in fireuser.fireballs:
                 fireball.drawFireball()
 
         for obstacle in app.obstacles:
@@ -1978,8 +2006,8 @@ def redrawAll(app):
         for enemy in app.enemies:
             enemy.drawEnemy()
 
-        for mage in app.mageEnemies:
-            for fireball in mage.fireballs:
+        for fireuser in app.fireuserEnemies:
+            for fireball in fireuser.fireballs:
                 fireball.drawFireball()
 
         for obstacle in app.obstacles:
