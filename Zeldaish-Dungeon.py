@@ -660,6 +660,7 @@ def onAppStart(app):
     app.changeButtonCreate = False
     app.getDungeonName = False
     app.loadDungeon = False
+    app.help = False
     app.allPositions = []
     
 """
@@ -1370,6 +1371,14 @@ def onKeyPress(app, key):
                 app.loadDungeon = True
                 app.getDungeonName = False
                 app.dungeonName = ""
+
+    elif app.help == True:
+        if key == 'h':
+            app.help = False
+
+    elif app.goToDungeonScreen == False and app.createDungeonRoom == False and app.loadDungeon == False and app.gameStarted == False:
+        if key == 'h':
+            app.help = True
                 
 """
 When the key is released the movement in the direction of that key is 0 now.
@@ -1428,7 +1437,7 @@ def onMouseMove(app, cx, cy):
 Checks if the user is pressing a button
 """
 def onMousePress(app, mouseX, mouseY):
-    if app.gameStarted == False and app.createDungeonRoom == False and app.goToDungeonScreen == False and app.loadDungeon == False and app.getDungeonName == False:
+    if app.gameStarted == False and app.createDungeonRoom == False and app.goToDungeonScreen == False and app.loadDungeon == False and app.getDungeonName == False and app.help == False:
         if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
             startAdventure(app)
             app.gameStarted = True
@@ -1729,6 +1738,15 @@ def drawRoomMakerButton2(app):
     drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
+This is a button which draws the help for users to get the help screen
+"""
+def drawHelpLabel(app):
+    drawRect(425, 280, 150, 55, fill = "black", align = "center")
+    drawRect(425, 280, 145, 50, fill = "green", align = "center")
+    drawLabel("Press h to go to help", 425, 280, align = 'center', font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 15)
+
+
+"""
 This is when the user doesnt hover over the room maker button on the start screen
 """
 def drawRoomMakerButton(app):
@@ -1887,6 +1905,20 @@ def drawLoadYourRoomButton2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+def drawHelpScreen(app):
+    loadImgNotMade = Image.open('images/loadingImage.jpg')
+    loadImg = CMUImage(loadImgNotMade.crop((0, 0, 505, 351)))
+    drawImage(loadImg, 0, 0)
+    for i in range(5):
+        drawRect(150, 50 + i*60, 270, 55, fill = "white", align = "center")
+        drawRect(150, 50 + i*60, 265, 50, fill = "green", align = "center")
+    drawLabel("To walk in a dungeon use the keys wasd.", 150, 50, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 15)
+    drawLabel("To shoot a fireball, walk in a direction and press f.", 20, 110, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13, align = "left")
+    drawLabel("To melee, press m", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("Press k,h, or t to grab a heart/key/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("To go to the next dungeon", 150, 280, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("go to the newly opened door and press space.", 150, 300, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     
 def redrawAll(app):
     if app.gameStarted:
@@ -1985,8 +2017,12 @@ def redrawAll(app):
             dragDrawEnemy(app, enemyDrag, dragCx, dragCy)
         drawAllEnemies(app)
 
+    elif app.help:
+        drawHelpScreen(app)
+
     else:
         drawStartingScreen(app)
+        drawHelpLabel(app)
         if app.changeButtonRoom:
             drawRoomMakerButton2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
