@@ -637,6 +637,10 @@ Below is methods relating to the game
 onAppStart basically sets all of the elementary values for the game.
 """
 def onAppStart(app):
+    app.loadImgNotMade = Image.open('images/loadingImage.jpg')
+    app.enemysprite = Image.open('images/zelda_enemies_sheet.png')
+    app.usersprites = Image.open('images/zelda_sprite_sheet.png')
+    app.tilesprites = Image.open('images/zelda_tileset.png')
     app.soundMelee = loadSound("sounds/sword_slash.wav")
     app.soundEnemyDie = loadSound("sounds/enemy_die.wav")
     app.soundLinkHurt = loadSound("sounds/link_hurt.wav")
@@ -1743,7 +1747,7 @@ This is a button which draws the help for users to get the help screen
 def drawHelpLabel(app):
     drawRect(425, 280, 150, 55, fill = "black", align = "center")
     drawRect(425, 280, 145, 50, fill = "green", align = "center")
-    drawLabel("Press h to go to help", 425, 280, align = 'center', font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 15)
+    drawLabel("Press h to go to help", 425, 280, align = 'center', font = 'The Wild Breath of Zelda', fill = 'white', bold = True, size = 15)
 
 
 """
@@ -1907,18 +1911,37 @@ def drawLoadYourRoomButton2(app):
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 def drawHelpScreen(app):
-    loadImgNotMade = Image.open('images/loadingImage.jpg')
-    loadImg = CMUImage(loadImgNotMade.crop((0, 0, 505, 351)))
+    loadImg = CMUImage(app.loadImgNotMade.crop((0, 0, 505, 351)))
+    spriteHelpImgs = CMUImage(app.usersprites.crop((0, 0, 205, 35)))
+    spriteHeartImg = CMUImage(app.usersprites.crop((574, 375, 610, 406)))
+    spriteKeyImg = CMUImage(app.usersprites.crop((696, 490, 723, 530)))
+    spriteTriImg = CMUImage(app.usersprites.crop((638, 552, 668, 579)))
+    spriteFireball = CMUImage(app.enemysprite.crop((578, 51, 621, 92)))
+    spriteMeleeImg = CMUImage(app.usersprites.crop((1, 158, 214, 218)))
+    tileDoorOpen = CMUImage(app.tilesprites.crop((1696, 21, 1761, 86)))
+    tileDoorClose = CMUImage(app.tilesprites.crop((1761, 23, 1827, 87)))
     drawImage(loadImg, 0, 0)
+
     for i in range(5):
         drawRect(150, 50 + i*60, 270, 55, fill = "white", align = "center")
         drawRect(150, 50 + i*60, 265, 50, fill = "green", align = "center")
     drawLabel("To walk in a dungeon use the keys wasd.", 150, 50, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 15)
+    drawImage(spriteHelpImgs, 290, 30)
     drawLabel("To shoot a fireball, walk in a direction and press f.", 20, 110, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13, align = "left")
+    drawImage(spriteFireball, 290, 90)
     drawLabel("To melee, press m", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
-    drawLabel("Press k,h, or t to grab a heart/key/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(spriteMeleeImg, 290, 150)
+    drawLabel("Press k, h, or t to grab a key/heart/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(spriteHeartImg, 290, 210)
+    drawImage(spriteKeyImg, 350, 210)
+    drawImage(spriteTriImg, 410, 215)
     drawLabel("To go to the next dungeon", 150, 280, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     drawLabel("go to the newly opened door and press space.", 150, 300, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(tileDoorOpen, 300, 270)
+    drawLine(370, 300, 415, 300, fill='white', 
+        lineWidth=2, dashes=True, opacity=100,
+         arrowStart=False, arrowEnd=True)
+    drawImage(tileDoorClose, 420, 270)
     
 def redrawAll(app):
     if app.gameStarted:
