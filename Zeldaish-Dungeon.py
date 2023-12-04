@@ -1352,78 +1352,10 @@ Gives user the ability to type and enter a filename
 """
 def onKeyPress(app, key):
     if app.acceptDungeon or app.getDungeonName:
-        if 'a' == key:
+        if key.isalpha() and len(key) == 1:
             app.dungeonName += key
-        elif 'b' == key:
+        elif key.isdigit() and len(key) == 1:
             app.dungeonName += key
-        elif 'c' == key:
-            app.dungeonName += key
-        elif 'd' == key:
-            app.dungeonName += key
-        elif 'e' == key:
-            app.dungeonName += key
-        elif 'f' == key:
-            app.dungeonName += key
-        elif 'g' == key:
-            app.dungeonName += key
-        elif 'h' == key:
-            app.dungeonName += key
-        elif 'i' == key:
-            app.dungeonName += key
-        elif 'j' == key:
-            app.dungeonName += key
-        elif 'k' == key:
-            app.dungeonName += key
-        elif 'l' == key:
-            app.dungeonName += key
-        elif 'm' == key:
-            app.dungeonName += key
-        elif 'n' == key:
-            app.dungeonName += key
-        elif 'o' == key:
-            app.dungeonName += key
-        elif 'p' == key:
-            app.dungeonName += key
-        elif 'q' == key:
-            app.dungeonName += key
-        elif 'r' == key:
-            app.dungeonName += key
-        elif 's' == key:
-            app.dungeonName += key
-        elif 't' == key:
-            app.dungeonName += key
-        elif 'u' == key:
-            app.dungeonName += key
-        elif 'v' == key:
-            app.dungeonName += key
-        elif 'w' == key:
-            app.dungeonName += key
-        elif 'x' == key:
-            app.dungeonName += key
-        elif 'y' == key:
-            app.dungeonName += key
-        elif 'z' == key:
-            app.dungeonName += key
-        elif '1' == key:
-            app.dungeonName += '1'
-        elif '2' == key:
-            app.dungeonName += '2'
-        elif '3' == key:
-            app.dungeonName += '3'
-        elif '4' == key:
-            app.dungeonName += '4'
-        elif '5' == key:
-            app.dungeonName += '5'
-        elif '6' == key:
-            app.dungeonName += '6'
-        elif '7' == key:
-            app.dungeonName += '7'
-        elif '8' == key:
-            app.dungeonName += '8'
-        elif '9' == key:
-            app.dungeonName += '9'
-        elif '0' == key:
-            app.dungeonName += '0'
         elif 'backspace' == key:
             app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1]
         elif 'enter' == key:
