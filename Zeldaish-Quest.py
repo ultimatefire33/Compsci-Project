@@ -1013,7 +1013,7 @@ def spawnKeyAndHealth(app):
 """
 This is for the user to progress through the rooms in the adventure version. Need to check
 which room the user is in and which position room the user is in. Only current way I know to
-do this is this. Also calls the spawn obstacles and enemies.
+do this is this.
 """
 def goNewRoom(app):
     if len(app.keys) == app.level and app.level == 1:
@@ -1088,7 +1088,6 @@ def goNewRoom(app):
             app.obstacles = []
             app.hearts = []
             spawnEnemies(app)
-            spawnObstacles(app)
     else:
         goBackPrevious(app)
 
