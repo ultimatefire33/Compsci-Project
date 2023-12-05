@@ -406,7 +406,7 @@ class EnemySlime(Enemy):
         drawImage(sprite, self.cx, self.cy)
 
     #Moves based on random angle and trignometric function
-    def changePosition(self, user):
+    def changePosition(self, user, obstacles):
         if user.health > 0:
             angle = random.randint(0, 360)
             self.speed = 10
@@ -1013,7 +1013,7 @@ def spawnKeyAndHealth(app):
 """
 This is for the user to progress through the rooms in the adventure version. Need to check
 which room the user is in and which position room the user is in. Only current way I know to
-do this is this. Also calls the spawn obstacles and enemies.
+do this is this.
 """
 def goNewRoom(app):
     if len(app.keys) == app.level and app.level == 1:
@@ -1213,7 +1213,7 @@ def onStep(app):
                 if enemy.canMove:
                     if isinstance(enemy, EnemySlime):
                         if app.timerCounter % 15 == 0:
-                            enemy.changePosition(app.user)
+                            enemy.changePosition(app.user, app.obstacles)
                     elif isinstance(enemy, EnemyLightning):
                         if app.timerCounter % 2 == 0:
                             enemy.changePosition()
