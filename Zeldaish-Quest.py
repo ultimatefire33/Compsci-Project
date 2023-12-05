@@ -2032,12 +2032,6 @@ def redrawAll(app):
         for fireball in app.user.fireballs:
             fireball.drawFireball()
 
-        for key in app.keyNotPicked:
-            key.drawKey()
-
-        for heart in app.hearts:
-            heart.drawHeart()
-
         for enemy in app.enemies:
             enemy.drawEnemy()
 
@@ -2050,6 +2044,12 @@ def redrawAll(app):
         
         for piece in app.triforcePieces:
             piece.drawTriforcePiece()
+        
+        for key in app.keyNotPicked:
+            key.drawKey()
+
+        for heart in app.hearts:
+            heart.drawHeart()
 
         if app.gameOver:
             drawGameOver(app)
