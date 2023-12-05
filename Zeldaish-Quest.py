@@ -406,7 +406,7 @@ class EnemySlime(Enemy):
         drawImage(sprite, self.cx, self.cy)
 
     #Moves based on random angle and trignometric function
-    def changePosition(self, user):
+    def changePosition(self, user, obstacles):
         if user.health > 0:
             angle = random.randint(0, 360)
             self.speed = 10
@@ -814,7 +814,8 @@ def startDungeon(app):
     spawnEnemiesDungeon(app)
 
 """
-This spawns the enemies for the dungeon that the user has created.
+This spawns the enemies for the dungeon that the user has created. Also doesnt spawn the enemy
+if it is beyond a certain point boundary, the edge boundaries for the dungeon.
 """
 def spawnEnemiesDungeon(app):
     for enemy in app.allPositions:
@@ -884,7 +885,6 @@ def spawnEnemies(app):
         spawnSpecificEnemy(app, 2, EnemyMage)
         spawnSpecificEnemy(app, 1, EnemyKnight)
     if app.level == 8:
-        spawnSpecificEnemy(app, 1, EnemyMage)
         spawnSpecificEnemy(app, 1, EnemyLynel)
         
 
@@ -1088,6 +1088,7 @@ def goNewRoom(app):
             app.obstacles = []
             app.hearts = []
             spawnEnemies(app)
+            spawnObstacles(app)
     else:
         goBackPrevious(app)
 
@@ -2007,7 +2008,7 @@ def drawHelpScreen(app):
     drawImage(spriteHelpImgs, 290, 30)
     drawLabel("To shoot a fireball, walk in a direction and press f.", 30, 110, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13, align = "left")
     drawImage(spriteFireball, 290, 90)
-    drawLabel("To melee, press m", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("To melee, press g.", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     drawImage(spriteMeleeImg, 290, 150)
     drawLabel("Press k, h, or t to grab a key/heart/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     drawImage(spriteHeartImg, 290, 210)
