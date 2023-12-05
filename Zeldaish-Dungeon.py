@@ -9,6 +9,7 @@ import pandas as pd
 
 """
 This is the parent enemy class that is used for all enemies.
+It has a base melee of 1 damage and very simple values for its width and height.
 """
 class Enemy:
     def __init__(self, cx, cy):
@@ -25,6 +26,7 @@ class Enemy:
         self.checkShoot = False
         self.shouldNotShoot = False
 
+    #The enemy will melee someone if they are near them
     def melee(self, user):
         if self.hasMelee:
             totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
@@ -32,14 +34,16 @@ class Enemy:
                 user.health -= self.meleeDamage
                 user.hitCurr = True 
 
+    #The enemy will change position based on its angle to the user and obstacles if they are near.
     def changePosition(self, user, obstacles):
+        #This gets the x direc vect and y direc vect and sets values to default
         if user.health > 0:
             directionVectX =  self.cx - user.cx
             directionVectY = self.cy - user.cy
             totalDistance = math.hypot(directionVectX, directionVectY)
             self.checkShoot = False
             self.shouldNotShoot = False
-
+            #Checks if the enemy is far away from the user
             if totalDistance > self.width:
                 self.speed = 2
                 self.cdx = directionVectX / totalDistance
@@ -52,7 +56,7 @@ class Enemy:
             angleToPlayer = math.atan2(-directionVectY, -directionVectX)
             self.cx += math.cos(angleToPlayer) * self.speed
             self.cy += math.sin(angleToPlayer) * self.speed
-
+            #Changes cx and cy based on the angle between itself and user
             if self.cx + math.cos(angleToPlayer) * self.speed > 410:
                 self.cx += - (math.cos(angleToPlayer) * self.speed)
             elif self.cy + math.sin(angleToPlayer) * self.speed > 255:
@@ -61,7 +65,7 @@ class Enemy:
                 self.cx += - (math.cos(angleToPlayer) * self.speed)
             elif self.cy + math.sin(angleToPlayer) * self.speed < 65:
                 self.cy += - (math.sin(angleToPlayer) * self.speed)
-
+            #Loops through the obstacle and changes angle and speed based on distance from obstacle
             for obstacle in obstacles:
                 obstacleVectX = obstacle.cx - self.cx
                 obstacleVectY = obstacle.cy - self.cy
@@ -79,12 +83,16 @@ class Enemy:
                     changeAngle = math.atan2(obstacleVectY, obstacleVectX) - math.pi / 2
                     self.cx += math.cos(changeAngle) * self.speed * 2
                     self.cy += math.sin(changeAngle) * self.speed * 2
-            
+
+            """        
+            Checks for lynel class(only lynel can shoot and melee) if it should or
+            should not shoot its fire projectile, based on if an object is infront of it
+            """       
             if self.checkShoot:
                 self.shouldNotShoot = True
             else:
                 self.shouldNotShoot = False
-
+        #If user health is less than 0, stand still
         else:
             self.cdx = 0
             self.cdy = 0
@@ -95,12 +103,9 @@ This is the main projectile that the user/mage uses, used when 'f' is pressed
 user can shoot a fireball every 0.5 seconds, also contains enemy fireball
 """
 class Fireball:
+    #Sets all base values and also sets cdx and cdy based on whether its enemy fireball or not
     def __init__(self, cx, cy, cdx, cdy, enemyFireball):
-        if enemyFireball:
-            self.speed = 6
-        else:
-            self.speed = 6
-
+        self.speed = 6
         if not (enemyFireball):
             self.cdx , self.cdy = self.getDirection(cdx, cdy) 
             self.cdx = self.cdx * self.speed
@@ -120,7 +125,8 @@ class Fireball:
         for i in range(2):
             self.sprite = CMUImage(spritestrip.crop((577, 0 + 60*i, 620, 35 + 60*i)))
             self.sprites.append(self.sprite)
-    
+
+    #Draws the fireball by going through the sprite animations
     def drawFireball(self):
         sprite = self.sprites[self.spriteCounterFire]
         drawImage(sprite, self.cx, self.cy)
@@ -129,6 +135,8 @@ class Fireball:
         self.cx += self.cdx
         self.cy += self.cdy
     
+    """If this is the user fireball it will get the direction of the fireball 
+    based on movement of the user"""
     def getDirection(self, cdx, cdy):
         if cdx > 0 and cdy > 0:
             return 1, 1
@@ -151,6 +159,7 @@ class Fireball:
 This is the main character class, user moves with 'wasd'
 """
 class Character:
+    #Sets all base values and also gets the sprite values
     def __init__(self):
         self.health = 5
         self.speed = 5
@@ -183,6 +192,8 @@ class Character:
         self.sprite = CMUImage(spritestrip.crop((159, 169, 219, 206)))
         self.meleeSprites.append(self.sprite)
 
+    """Depending on where the user is moving or what they are doing, there are different animations
+        which are gotten from slicing the list of images"""
     def drawCharacter(self):
         if not self.meleeDone:
             if self.cdx == 0 and self.cdy == 0:
@@ -234,6 +245,7 @@ class Character:
         self.cx += self.cdx
         self.cy += self.cdy
 
+    #Checks if there are less than three fireballs and the user isnt standing still, then it makes a fireball
     def createFireball(self):
         if len(self.fireballs) < 3 and self.ifBothZero() == False:
             newFireball = Fireball(self.cx, self.cy, self.cdx, self.cdy, False)
@@ -244,6 +256,7 @@ class Character:
             return True
         return False
     
+    #Same as the enemy melee but it does two damage
     def melee(self, enemy):
         totalDistance = math.dist([self.cx, self.cy], [enemy.cx, enemy.cy])
         if totalDistance <= self.width * 2:
@@ -270,6 +283,7 @@ class EnemyMage(Enemy):
             self.sprite = CMUImage(spritestrip.crop((460+60*i, 110, 499+60*i, 146)))
             self.sprites.append(self.sprite)
     
+    #Checks where the user is and based on that it draws the sprite, only 3 images
     def drawEnemy(self):
         if self.fireballCDY >= 0 and self.fireballCDX <= 0:
             self.currSprites = self.sprites[0]
@@ -286,6 +300,7 @@ class EnemyMage(Enemy):
             sprite = self.currSprites
             drawImage(sprite, self.cx, self.cy)
 
+    #Creates fireball in the direction of the user
     def createFireball(self, user):
         totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
         self.fireballCDX = ((user.cx - self.cx) / totalDistance)
@@ -297,6 +312,7 @@ class EnemyMage(Enemy):
 This is a melee type of enemy that removes one health from the user every second in range
 """   
 class EnemyKnight(Enemy):
+    #Inherits from the parent and also has 3 health
     def __init__(self, cx, cy):
         super().__init__(cx, cy)
         self.health = 3
@@ -314,6 +330,7 @@ class EnemyKnight(Enemy):
                 self.sprite = CMUImage(spritestrip.crop((224+60*i, 349 + 60*j, 262+60*i, 386 + 60*j)))
                 self.sprites.append(self.sprite)
     
+    #Draws different sprites based on where the user is
     def drawEnemy(self):
         if self.cdx == 0 and self.cdy == 0:
             self.currSprites = self.sprites[0]
@@ -344,6 +361,7 @@ class EnemyKnight(Enemy):
 Weaker melee enemy class that also moves slower
 """
 class EnemyMummy(Enemy):
+    #Only has one health and also inherits from the parent class
     def __init__(self, cx, cy):
         super().__init__(cx, cy)
         self.health = 1
@@ -359,6 +377,7 @@ class EnemyMummy(Enemy):
             self.sprite = CMUImage(spritestrip.crop((638, 345 + 60*i, 677, 384 + 60*i)))
             self.sprites.append(self.sprite)
 
+    #This only has two sprites, facing and turing away from screen
     def drawEnemy(self):
         sprite = self.sprites[self.spriteCounterEnemy]
         drawImage(sprite, self.cx, self.cy)
@@ -367,6 +386,7 @@ class EnemyMummy(Enemy):
 Very basic enemy that cant move much and still melees the user if they get too close
 """
 class EnemySlime(Enemy):
+    #Inherits from parent class and has one health
     def __init__(self, cx, cy):
         super().__init__(cx, cy)
         self.health = 1
@@ -385,7 +405,8 @@ class EnemySlime(Enemy):
         sprite = self.sprites[self.spriteCounterEnemy]
         drawImage(sprite, self.cx, self.cy)
 
-    def changePosition(self, user, obstacles):
+    #Moves based on random angle and trignometric function
+    def changePosition(self, user):
         if user.health > 0:
             angle = random.randint(0, 360)
             self.speed = 10
@@ -403,6 +424,7 @@ This is another enemy type that moves around the edge of a room and hits the pla
 taking 1 health from them.
 """            
 class EnemyLightning(Enemy):
+    #Inherits from parent class and has a speed of 10 and a health of 2, also has a random starting wall
     def __init__(self, cx, cy):
         super().__init__(cx, cy)
         self.health = 2
@@ -424,6 +446,7 @@ class EnemyLightning(Enemy):
         sprite = self.sprites[self.spriteCounterEnemy]
         drawImage(sprite, self.cx, self.cy)
 
+    #Changes position based on the wall it started on
     def changePosition(self):
         if self.startingWall != None:
             if self.startingWall == 1:
@@ -464,6 +487,7 @@ class EnemyLightning(Enemy):
                 self.cx += self.cdx
                 self.cy += self.cdy
 
+    #Checks if it reaches some sort of edge case
     def isLegalLightning(self):
         if self.cdx == 0 and self.cdy < 0:
             if self.cy + self.cdy < 55:
@@ -486,6 +510,7 @@ class EnemyLightning(Enemy):
             else:
                 return True
             
+    #Gets the next values for the lightning enemy to move
     def getNextVals(self):
         if self.currWall == 1:
             self.currWall = 2
@@ -511,6 +536,7 @@ class EnemyLightning(Enemy):
 Miniboss with 7 health and moves the same way as the mummy and knight ai
 """
 class EnemyLynel(Enemy):
+    #Miniboss which has 7 health, 2 melee damage, and can shoot fire
     def __init__(self, cx, cy):
         super().__init__(cx, cy)
         self.health = 7
@@ -533,6 +559,7 @@ class EnemyLynel(Enemy):
                 self.sprite = CMUImage(spritestrip.crop((230+60*i, 465 + 60*j, 268+60*i, 504 + 60*j)))
                 self.sprites.append(self.sprite)
 
+    #Draws in a similar way as the knight enemy
     def drawEnemy(self):
         if self.cdx == 0 and self.cdy == 0:
             self.currSprites = self.sprites[0]
@@ -559,6 +586,7 @@ class EnemyLynel(Enemy):
             sprite = self.currSprites[self.spriteCounterEnemy]
             drawImage(sprite, self.cx, self.cy)
 
+    #Creates a fireball based on if a obstacle is infront of it or not
     def createFireball(self, user):
         if self.shouldNotShoot == False:
             totalDistance = math.dist([self.cx, self.cy], [user.cx, user.cy])
@@ -572,6 +600,7 @@ Key spawns that leads to next room and happens every time the enemies in the roo
 are currently in are defeated.
 """
 class Key:
+    #Only has a cx and cy and if it is taken or not by the user
     def __init__(self, cx, cy):
         self.cx = cx
         self.cy = cy
@@ -587,6 +616,7 @@ Heart spawns that gives back all health and happens when all the enemies in the 
 in are defeated. If not picked up and user goes to the next room, it will disappear.
 """
 class Heart:
+    #Has cx and cy and if it was taken by the user
     def __init__(self, cx, cy):
         self.cx = cx
         self.cy = cy
@@ -601,6 +631,7 @@ class Heart:
 Triforce Piece spawns whenever all enemies in level 8 are defeated. When picked up the game is over.
 """
 class TriforcePiece:
+    #Has a cx and cy and if it was taken by the user
     def __init__(self, cx, cy):
         self.cx = cx
         self.cy = cy
@@ -615,6 +646,7 @@ class TriforcePiece:
 Obstacle that makes it so player and enemies cant move in that square.
 """
 class Obstacle:
+    #Has a cx and cy and a width and height
     def __init__(self, cx, cy):
         self.cx = cx
         self.cy = cy
@@ -634,9 +666,14 @@ Below is methods relating to the game
 """
 
 """
-onAppStart basically sets all of the elementary values for the game.
+onAppStart basically sets all of the elementary values for the game, currently has the images
+the sounds and the app boundaries and important varaibles such as gameStarted, loadDungeon etc.
 """
 def onAppStart(app):
+    app.loadImgNotMade = Image.open('images/loadingImage.jpg')
+    app.enemysprite = Image.open('images/zelda_enemies_sheet.png')
+    app.usersprites = Image.open('images/zelda_sprite_sheet.png')
+    app.tilesprites = Image.open('images/zelda_tileset.png')
     app.soundMelee = loadSound("sounds/sword_slash.wav")
     app.soundEnemyDie = loadSound("sounds/enemy_die.wav")
     app.soundLinkHurt = loadSound("sounds/link_hurt.wav")
@@ -660,12 +697,14 @@ def onAppStart(app):
     app.changeButtonCreate = False
     app.getDungeonName = False
     app.loadDungeon = False
+    app.help = False
     app.allPositions = []
     
 """
-Basically the restart method
+Basically the restart method for when the user wants to restart the game, checks level
+the position level that the user is on, the gameWon, whether or not a level is cleared, 
+and all the enemies in a level and keys and hearts and other items.
 """
-
 def startAdventure(app):
     app.width = 505
     app.height = 351
@@ -699,6 +738,9 @@ def startAdventure(app):
     app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
     spawnEnemies(app)
 
+"""
+This has all of the images and boudaries for when the user is creating a room.
+"""
 def createRoom(app):
     app.tileset = Image.open('images/zelda_tileset.png')
     app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
@@ -738,7 +780,9 @@ def createRoom(app):
     app.enemiesNeedDraw = []
     app.enemiesForFile = []
 
-
+"""
+This is the reset button for the dungeon and also has very similar values to the startAdventure method.
+"""
 def startDungeon(app):
     app.tileset = Image.open('images/zelda_tileset.png')
     app.spritestrip = Image.open('images/zelda_sprite_sheet.png')
@@ -769,6 +813,9 @@ def startDungeon(app):
     app.lowMostSpawn = app.boardTop + app.boardHeight - 35
     spawnEnemiesDungeon(app)
 
+"""
+This spawns the enemies for the dungeon that the user has created.
+"""
 def spawnEnemiesDungeon(app):
     for enemy in app.allPositions:
         if app.leftMostSpawn >= int(enemy[1]):
@@ -782,7 +829,9 @@ def spawnEnemiesDungeon(app):
         else:
             spawnEnemyDungeon(app, enemy[0], int(enemy[1]), int(enemy[2]))
         
-
+"""
+This checks what enemy was put in and spawns that enemy
+"""
 def spawnEnemyDungeon(app, enemyType, enemyCX, enemyCY):
     if enemyType == "knight":
         newEnemy = EnemyKnight(enemyCX, enemyCY)
@@ -810,7 +859,7 @@ def spawnEnemyDungeon(app, enemyType, enemyCX, enemyCY):
 
 
 """
-This spawns the enemies for each level
+This spawns the enemies for each level for the game that is not made by the user.
 """
 def spawnEnemies(app):
     if app.level == 1:
@@ -840,7 +889,8 @@ def spawnEnemies(app):
         
 
 """
-This spawns the specific enemy types
+This spawns the specific enemy types by random position for the game, checks if any enemy
+is on top of another enemy and if so it moves that enemy.
 """
 def spawnSpecificEnemy(app, numEnemy, enemyType):
     for i in range(numEnemy):
@@ -859,11 +909,11 @@ def spawnSpecificEnemy(app, numEnemy, enemyType):
             app.fireuserEnemies.append(newEnemy)
 
 """
-Spawns the obstacles so the enemy won't get clipped into them
+Spawns the obstacles so the enemy won't get clipped into them. Also has some 
+padding from the edge of the board so there is some distance for the user and the
+enemy to move inbetween the wall and the obstacle.
 """        
 def spawnObstacles(app):
-    finish = False
-    numMistakes = 0
     numObstacles = 1
     padding = 35
     leftMostSpawn = app.leftMostSpawn + padding
@@ -882,7 +932,6 @@ def spawnObstacles(app):
                     cy = random.randint(upMostSpawn, lowMostSpawn)  
         
         for obstacle in app.obstacles:
-            hypotObstacle = math.hypot(obstacle.width, obstacle.height)
             if (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < 130):
                 while (math.dist([cx, cy], [obstacle.cx, obstacle.cy]) < 130):
                     cx = random.randint(leftMostSpawn, rightMostSpawn)
@@ -892,7 +941,7 @@ def spawnObstacles(app):
         app.obstacles.append(newObstacle) 
 
 """
-This checks after an enemy is defeated whether a level is cleared or not
+This checks after an enemy is defeated whether a level is cleared or not.
 """
 def levelClearer(app):
     if app.gameStarted:
@@ -904,7 +953,7 @@ def levelClearer(app):
             gameDone(app)
 
 """
-This checks whether the game is done and spawns the triforce shard if it is
+This checks whether the game is done and spawns the triforce shard if it is.
 """
 def gameDone(app):
     if app.gameStarted:
@@ -919,7 +968,8 @@ def gameDone(app):
             app.levelClear = False
 
 """
-This spawns the triforce shard after all the enemies are cleared on level 8
+This spawns the triforce shard after all the enemies are cleared on level 8, or if you beat
+your dungeon room in the make your own dungeon.
 """
 def spawnTriforce(app):
     padding = 35
@@ -938,7 +988,7 @@ def spawnTriforce(app):
         app.triforcePieces = [tri]
 
 """
-This spawns the keys and health after each of the levels are cleared
+This spawns the keys and health after each of the levels are cleared, based on random placement.
 """
 def spawnKeyAndHealth(app):
     padding = 35
@@ -961,7 +1011,9 @@ def spawnKeyAndHealth(app):
         app.hearts = [heart]
 
 """
-This is for the user to progress through the rooms
+This is for the user to progress through the rooms in the adventure version. Need to check
+which room the user is in and which position room the user is in. Only current way I know to
+do this is this.
 """
 def goNewRoom(app):
     if len(app.keys) == app.level and app.level == 1:
@@ -1040,7 +1092,8 @@ def goNewRoom(app):
         goBackPrevious(app)
 
 """
-This is for the user to go back to the previous level to progress onto the next level
+This is for the user to go back to the previous level to progress onto the next level if they need
+to walk to the next room on the right or left.
 """
 def goBackPrevious(app): 
     if len(app.keys) == app.level and app.level == 3:
@@ -1086,7 +1139,7 @@ def goBackPrevious(app):
 
 """
 This keeps track of all timed events and movement of main character, npcs, and 
-projectiles
+projectiles and win and loss conditions.
 """
 def onStep(app):
     if app.gameStarted or app.loadDungeon:
@@ -1095,9 +1148,11 @@ def onStep(app):
         if app.user.health <= 0:
             app.gameOver = True
 
+        #Makes the fade in animation for the game over
         if app.gameOver and app.gameOverCounter < 100:
             app.gameOverCounter += 1
 
+        #Draws the user melee and user walking animations
         if app.user.meleeDone != True:
             if app.user.cdx == 0 and app.user.cdy == 0:
                 app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
@@ -1107,6 +1162,7 @@ def onStep(app):
         else:
             app.user.spriteCounter = (1 + app.user.spriteCounter) % 1
 
+        #Draws the enemy animations
         for enemy in app.enemies:
             if isinstance(enemy, EnemyKnight) or isinstance(enemy, EnemyLynel):
                 if enemy.cdx == 0 and enemy.cdy == 0:
@@ -1127,14 +1183,17 @@ def onStep(app):
                 if app.timerCounter % 15 == 0:
                     enemy.spriteCounterEnemy = (1 + enemy.spriteCounterEnemy) % len(enemy.sprites)
         
+        #Draws the fireball animations for the user
         for fireball in app.user.fireballs:
             fireball.spriteCounterFire = (1 + fireball.spriteCounterFire) % len(fireball.sprites) 
 
+        #Resets values after every 30 steps so user can do moves again.
         if app.timerCounter % 30 == 0:
             app.fireballShot = False
             app.user.meleeDone = False
             app.wait = False
 
+        #Shoots fireball for enemy and plays sound for their fireball
         if app.timerCounter % 30 == 0:
             app.user.hitCurr = False
             for fireuser in app.fireuserEnemies:
@@ -1143,9 +1202,11 @@ def onStep(app):
                         fireuser.createFireball(app.user)  
                         app.soundCreateFireball.play()
 
-        if isLegal(app, app.user)and app.user.health > 0:
+        #Moves the user only if they are not dead and they havent reached a boundary.
+        if isLegal(app, app.user) and app.user.health > 0:
             app.user.changePosition()
 
+        #Moves the enemies per level and also makes the enemies hit the user, plays sound as well
         for enemy in app.enemies:
             if isLegal(app, enemy):
                 if enemy.canMove:
@@ -1177,12 +1238,14 @@ def onStep(app):
                             app.fireuserEnemies.remove(enemy) 
                     app.wait = True
 
+        #Changes fireballs position in user fireball or removes them.
         for fireball in app.user.fireballs:
             if isLegal(app, fireball) and app.gameOver == False:
                 fireball.changeFireballPos()  
             else:
                 app.user.fireballs.remove(fireball) 
 
+        #Changes fireballs position in enemy fireballs or removes them.
         for fireuser in app.fireuserEnemies:
             for fireball in fireuser.fireballs:
                 if isLegal(app, fireball) and app.gameOver == False:
@@ -1198,6 +1261,7 @@ def onStep(app):
 This checks if a movement for an npc or the user is legal, can also apply to the moves of each
 """
 def isLegal(app, character):
+    #Checks if enemies or user has reached a border boundary.
     if isinstance(character, EnemyLightning) == False:
         if character.cx + character.cdx  > 410:
             return False
@@ -1208,10 +1272,12 @@ def isLegal(app, character):
         if character.cy + character.cdy < 65:
             return False
         
+        #Checks if an enemy or user has reached an obstacle.
         for obstacle in app.obstacles:
             if math.dist([character.cx + character.cdx, character.cy + character.cdy], [obstacle.cx, obstacle.cy]) <= math.hypot(obstacle.width, obstacle.height) * 0.6:
-                return False     
-        
+                return False  
+               
+    #Checks if a fireball has reached a boundary or enemy/user.    
     if isinstance(character, Fireball):
         if character.enemyFireball == False:
             for enemy in app.enemies:
@@ -1239,11 +1305,8 @@ def isLegal(app, character):
 Loads the sounds for the moves, character, and enemies
 """
 def loadSound(relativePath):
-    # Convert to absolute path (because pathlib.Path only takes absolute paths)
     absolutePath = os.path.abspath(relativePath)
-    # Get local file URL
     url = pathlib.Path(absolutePath).as_uri()
-    # Load Sound file from local URL
     return Sound(url)
 
 """
@@ -1271,6 +1334,11 @@ Below is the app key and mouse movements/presses
 """
 This basically gives all the moves of the character and allows for extra stuff during different phrases of the program.
 I will add those phases later.
+"""
+
+""" 
+Most of the keys in this are for the user to move around or pick up items or shoot fireballs.
+Some keys are based on if the user has lost.
 """
 def onKeyHold(app, keys):
     if app.gameStarted or app.loadDungeon:
@@ -1343,87 +1411,24 @@ def onKeyHold(app, keys):
         
         elif app.gameOver and 'r' in keys and app.gameStarted:
             startAdventure(app)
+
+        elif app.gameOver and 'space' in keys and (app.gameStarted or app.loadDungeon):
+            app.gameStarted = False
+            app.gameOver = False
         
         elif app.gameOver and 'r' in keys and app.loadDungeon:
             startDungeon(app)
 
 """
-Gives user the ability to type and enter a filename
+Gives user the ability to type and enter a filename. Also checks if the user wants to user
+the help screen or leave the help screen.
 """
 def onKeyPress(app, key):
     if app.acceptDungeon or app.getDungeonName:
-        if 'a' == key:
+        if key.isalpha() and len(key) == 1:
             app.dungeonName += key
-        elif 'b' == key:
+        elif key.isdigit() and len(key) == 1:
             app.dungeonName += key
-        elif 'c' == key:
-            app.dungeonName += key
-        elif 'd' == key:
-            app.dungeonName += key
-        elif 'e' == key:
-            app.dungeonName += key
-        elif 'f' == key:
-            app.dungeonName += key
-        elif 'g' == key:
-            app.dungeonName += key
-        elif 'h' == key:
-            app.dungeonName += key
-        elif 'i' == key:
-            app.dungeonName += key
-        elif 'j' == key:
-            app.dungeonName += key
-        elif 'k' == key:
-            app.dungeonName += key
-        elif 'l' == key:
-            app.dungeonName += key
-        elif 'm' == key:
-            app.dungeonName += key
-        elif 'n' == key:
-            app.dungeonName += key
-        elif 'o' == key:
-            app.dungeonName += key
-        elif 'p' == key:
-            app.dungeonName += key
-        elif 'q' == key:
-            app.dungeonName += key
-        elif 'r' == key:
-            app.dungeonName += key
-        elif 's' == key:
-            app.dungeonName += key
-        elif 't' == key:
-            app.dungeonName += key
-        elif 'u' == key:
-            app.dungeonName += key
-        elif 'v' == key:
-            app.dungeonName += key
-        elif 'w' == key:
-            app.dungeonName += key
-        elif 'x' == key:
-            app.dungeonName += key
-        elif 'y' == key:
-            app.dungeonName += key
-        elif 'z' == key:
-            app.dungeonName += key
-        elif '1' == key:
-            app.dungeonName += '1'
-        elif '2' == key:
-            app.dungeonName += '2'
-        elif '3' == key:
-            app.dungeonName += '3'
-        elif '4' == key:
-            app.dungeonName += '4'
-        elif '5' == key:
-            app.dungeonName += '5'
-        elif '6' == key:
-            app.dungeonName += '6'
-        elif '7' == key:
-            app.dungeonName += '7'
-        elif '8' == key:
-            app.dungeonName += '8'
-        elif '9' == key:
-            app.dungeonName += '9'
-        elif '0' == key:
-            app.dungeonName += '0'
         elif 'backspace' == key:
             app.dungeonName = app.dungeonName[:len(app.dungeonName) - 1]
         elif 'enter' == key:
@@ -1438,6 +1443,14 @@ def onKeyPress(app, key):
                 app.loadDungeon = True
                 app.getDungeonName = False
                 app.dungeonName = ""
+
+    elif app.help == True:
+        if key == 'h':
+            app.help = False
+
+    elif app.goToDungeonScreen == False and app.createDungeonRoom == False and app.loadDungeon == False and app.gameStarted == False:
+        if key == 'h':
+            app.help = True
                 
 """
 When the key is released the movement in the direction of that key is 0 now.
@@ -1454,7 +1467,8 @@ def onKeyRelease(app, key):
             app.user.cdy = 0
 
 """
-Checks if the user is hovering over a button
+Checks if the user is hovering over a button, different positions for different buttons.
+Has other versions based on if the user is hovering over the button.
 """
 def onMouseMove(app, cx, cy):
     if app.gameStarted == False and app.goToDungeonScreen == False:
@@ -1496,7 +1510,8 @@ def onMouseMove(app, cx, cy):
 Checks if the user is pressing a button
 """
 def onMousePress(app, mouseX, mouseY):
-    if app.gameStarted == False and app.createDungeonRoom == False and app.goToDungeonScreen == False and app.loadDungeon == False and app.getDungeonName == False:
+    #Checks for presses on the start screen
+    if app.gameStarted == False and app.createDungeonRoom == False and app.goToDungeonScreen == False and app.loadDungeon == False and app.getDungeonName == False and app.help == False:
         if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
             startAdventure(app)
             app.gameStarted = True
@@ -1506,6 +1521,7 @@ def onMousePress(app, mouseX, mouseY):
             app.changeButtonStart = False
             app.changeButtonRoom = False
     
+    #Checks for presses on the create a room screen.
     elif app.goToDungeonScreen:
         if (152 <= mouseX <= 352) and (150 <= mouseY <= 200):
             createRoom(app)
@@ -1518,6 +1534,7 @@ def onMousePress(app, mouseX, mouseY):
             app.changeButtonLoad = False
             app.changeButtonCreate = False
 
+    #This checks if the user is pressing on one of the enemy/obstacle sprites for the create a room.
     elif app.createDungeonRoom:
         if 510 <= mouseX <= 510 + app.enemy1Width and 80 <= mouseY <= 80 + app.enemy1Height:
             app.dragEnemy = True
@@ -1555,7 +1572,7 @@ def onMousePress(app, mouseX, mouseY):
             app.dragEnemy = False
 
 """
-User can drag the enemies they want into the dungeon room
+User can drag the enemies they want into the dungeon room.
 """        
 def onMouseDrag(app, cx, cy):
     if app.createDungeonRoom:
@@ -1563,7 +1580,7 @@ def onMouseDrag(app, cx, cy):
 
 """
 This places the enemy into the dungeon room and also appends the two lists for the enemies that will need to be drawn currently 
-and the enemies that will be placed into the dungeon file
+and the enemies that will be placed into the dungeon file.
 """
 def onMouseRelease(app, cx, cy):
     if app.createDungeonRoom and app.dragEnemy:
@@ -1615,7 +1632,7 @@ def drawExterior(app):
     drawImage(exterior, 0, 0)
   
 """
-Draws the doors of the room
+Draws the doors of the room, different doors for different levels and intermediate levels.
 """
 def drawDoorBlocks(app):
     if app.level == 1 and len(app.keys) == 0:
@@ -1764,7 +1781,7 @@ def drawDoorBlocks(app):
         drawImage(block4, 222, 1)
 
 """
-This draws the starting screen for the user
+This draws the starting screen for the user.
 """
 def drawStartingScreen(app):
     image = Image.open('images/mainscreen.png')
@@ -1773,7 +1790,7 @@ def drawStartingScreen(app):
     drawLabel("Zeldaish Quest", 258, 60, size = 60, font = 'The Wild Breath of Zelda', fill = 'green', bold = True)
 
 """
-This is the button that shows up when the user is not hovering over start button
+This is the button that shows up when the user is not hovering over start button.
 """
 def drawStartGameOne(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
@@ -1781,7 +1798,7 @@ def drawStartGameOne(app):
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This is the button that shows up when the user is hovering over the start button
+This is the button that shows up when the user is hovering over the start button.
 """
 def drawStartGameTwo(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
@@ -1789,7 +1806,7 @@ def drawStartGameTwo(app):
     drawLabel("Start Game", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This is the when the user hovers over the button on the start screen for room maker 
+This is the when the user hovers over the button on the start screen for room maker. 
 """
 def drawRoomMakerButton2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
@@ -1797,14 +1814,23 @@ def drawRoomMakerButton2(app):
     drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This is when the user doesnt hover over the room maker button on the start screen
+This is a button which draws the help for users to get the help screen.
+"""
+def drawHelpLabel(app):
+    drawRect(425, 280, 150, 55, fill = "black", align = "center")
+    drawRect(425, 280, 145, 50, fill = "green", align = "center")
+    drawLabel("Press h to go to help", 425, 280, align = 'center', font = 'The Wild Breath of Zelda', fill = 'white', bold = True, size = 15)
+    drawLabel("(Press h in help screen to go back)", 425, 290, align = 'center', font = 'The Wild Breath of Zelda', fill = 'white', bold = True, size = 10)
+
+"""
+This is when the user doesnt hover over the room maker button on the start screen.
 """
 def drawRoomMakerButton(app):
     drawRect(252, 125, 200, 50, fill = "black", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Room Maker", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 """
-This draws the triforce when the start game button is hovered over(Not mine)
+This draws the triforce when the start game button is hovered over(Not mine).
 """
 def drawSierpinskiTriangle(app, level, x, y, size):
     # (x,y) is the lower-left corner of the triangle
@@ -1823,7 +1849,7 @@ def drawSierpinskiTriangle(app, level, x, y, size):
         drawSierpinskiTriangle(app, level-1, x+size/4, midY, size/2)
 
 """
-If the user beats the game then the game won screen will be drawn
+If the user beats the game then the game won screen will be drawn.
 """
 def drawGameWon(app):
     drawRect(0, 0, 505, 351, fill = 'yellow')
@@ -1837,13 +1863,14 @@ This draws the game over screen when the user has 0 health.
 """
 def drawGameOver(app):
     drawRect(0, 0, 516, 355, fill = "black", opacity = app.gameOverCounter)
-    drawLabel("You Died", 258, 178, size = 60, font = 'The Wild Breath of Zelda', fill = 'red', opacity = app.gameOverCounter, bold = True)
-    drawRect(252, 250, 200, 50, fill = "white", align = "center", opacity = app.gameOverCounter)
-    drawRect(252, 250, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
-    drawLabel("Press r to restart", 252, 250, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
+    drawLabel("You Died", 258, 150, size = 60, font = 'The Wild Breath of Zelda', fill = 'red', opacity = app.gameOverCounter, bold = True)
+    drawRect(252, 222, 200, 50, fill = "white", align = "center", opacity = app.gameOverCounter)
+    drawRect(252, 222, 195, 45, fill = "navy", align = "center", opacity = app.gameOverCounter)
+    drawLabel("Press r to restart", 252, 222, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 25, opacity = app.gameOverCounter)
+    drawLabel("Press space to go to main menu", 252, 278, align = "center", font = 'The Wild Breath of Zelda', fill = 'Red', bold = True, size = 25, opacity = app.gameOverCounter)
 
 """
-Draws the dungeon doors for the build dungeon 
+Draws the dungeon doors for the build dungeon. 
 """
 def dungeonCreatorDoors(app):
     block1 = CMUImage(app.tileset.crop((1630, 88, 1695, 153)))
@@ -1856,7 +1883,7 @@ def dungeonCreatorDoors(app):
     drawImage(block4, 221, 0)
 
 """
-Draws the enemy images which the user will interact with on the build dungeon
+Draws the enemy images which the user will interact with on the build dungeon.
 """
 def drawEnemiesIdle(app):
     drawRect(505, 0, 100, 451, fill = "black")
@@ -1871,14 +1898,14 @@ def drawEnemiesIdle(app):
 
 
 """
-Places enemy on cx and cy of mouse when user is trying to get enemy for a dungeon
+Places enemy on cx and cy of mouse when user is trying to get enemy for a dungeon.
 """
 def dragDrawEnemy(app, enemy, cx, cy):
     if app.dragEnemy:
         drawImage(enemy, cx, cy, align = 'center')
 
 """
-Places enemy on cx and cy of the release of mouse when user is trying to get an enemy for the dungeon
+Places enemy on cx and cy of the release of mouse when user is trying to get an enemy for the dungeon.
 """
 def drawReleaseEnemy(app):
     if app.dragEnemy == False and app.timeToDraw == True:
@@ -1887,14 +1914,14 @@ def drawReleaseEnemy(app):
         drawImage(enemyDrag, releaseCx, releaseCy, align = 'center')
 
 """
-This draws every enemy on the board that the user has placed
+This draws every enemy on the board that the user has placed for the create a room.
 """
 def drawAllEnemies(app):
     for enemy in app.enemiesNeedDraw:
             drawImage(enemy[0], enemy[1], enemy[2], align = 'center')
 
 """
-This draws the accept dungeon button on the create dungeon screen
+This draws the accept dungeon button on the create dungeon screen.
 """
 def drawAcceptButton(app):
     drawRect(0, 351, 605, 100, fill = "navy")
@@ -1903,7 +1930,7 @@ def drawAcceptButton(app):
     drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
 """
-This draws the accept dungeon button on the create dungeon screen when the user hovers over it
+This draws the accept dungeon button on the create dungeon screen when the user hovers over it.
 """
 def drawAcceptButton2(app):
     drawRect(0, 351, 605, 100, fill = "navy")
@@ -1912,7 +1939,7 @@ def drawAcceptButton2(app):
     drawLabel("Create Dungeon", 302.5, 401, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
 """
-This is for when the user is entering a name for reading or writing a file
+This is for when the user is entering a name for reading or writing a file.
 """
 def drawDungeonNameScreen(app):
     loadImgNotMade = Image.open('images/loadingImage.jpg')
@@ -1925,7 +1952,7 @@ def drawDungeonNameScreen(app):
     drawLabel(app.dungeonName, 275, 175.5, align = 'center', font = "The Wild Breath of Zelda", fill = "Yellow", bold = True, size = 15)
 
 """
-This draws the button for create room on idle
+This draws the button for create room on idle.
 """
 def drawCreateYourRoomButton1(app):
     drawRect(252, 185, 200, 50, fill = "black", align = "center")
@@ -1933,7 +1960,7 @@ def drawCreateYourRoomButton1(app):
     drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This draws the button for create room when the user hovers over it
+This draws the button for create room when the user hovers over it.
 """
 def drawCreateYourRoomButton2(app):
     drawRect(252, 185, 200, 50, fill = "white", align = "center")
@@ -1941,7 +1968,7 @@ def drawCreateYourRoomButton2(app):
     drawLabel("Create Room", 252, 185, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This draws the button for load room when on idle
+This draws the button for load room when on idle.
 """
 def drawLoadYourRoomButton1(app):
     drawRect(252, 125, 200, 50, fill = "black", align = "center")
@@ -1949,12 +1976,50 @@ def drawLoadYourRoomButton1(app):
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
 
 """
-This draws the button for load when when the user hovers over it
+This draws the button for load when when the user hovers over it.
 """
 def drawLoadYourRoomButton2(app):
     drawRect(252, 125, 200, 50, fill = "white", align = "center")
     drawRect(252, 125, 195, 45, fill = "green", align = "center")
     drawLabel("Load Room", 252, 125, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 30)
+
+"""
+Draws the help screen by getting all the sprites for all the enemies and obstacles and puts them
+on the right of the text descriptions so the user can understand what relates to what.
+"""
+def drawHelpScreen(app):
+    #Gets all the sprites needed.
+    drawRect(0,0, 505, 351)
+    spriteHelpImgs = CMUImage(app.usersprites.crop((0, 0, 205, 35)))
+    spriteHeartImg = CMUImage(app.usersprites.crop((574, 375, 610, 406)))
+    spriteKeyImg = CMUImage(app.usersprites.crop((696, 490, 723, 530)))
+    spriteTriImg = CMUImage(app.usersprites.crop((638, 552, 668, 579)))
+    spriteFireball = CMUImage(app.enemysprite.crop((578, 51, 621, 92)))
+    spriteMeleeImg = CMUImage(app.usersprites.crop((1, 158, 214, 218)))
+    tileDoorOpen = CMUImage(app.tilesprites.crop((1696, 21, 1761, 86)))
+    tileDoorClose = CMUImage(app.tilesprites.crop((1761, 23, 1827, 87)))
+    
+    #Draws the rectangles and then after draws the labels and images next to them.
+    for i in range(5):
+        drawRect(150, 50 + i*60, 270, 55, fill = "white", align = "center")
+        drawRect(150, 50 + i*60, 265, 50, fill = "green", align = "center")
+    drawLabel("To walk in a dungeon use the keys wasd.", 150, 50, align = "center", font = 'The Wild Breath of Zelda', fill = 'Yellow', bold = True, size = 15)
+    drawImage(spriteHelpImgs, 290, 30)
+    drawLabel("To shoot a fireball, walk in a direction and press f.", 30, 110, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13, align = "left")
+    drawImage(spriteFireball, 290, 90)
+    drawLabel("To melee, press m", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(spriteMeleeImg, 290, 150)
+    drawLabel("Press k, h, or t to grab a key/heart/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(spriteHeartImg, 290, 210)
+    drawImage(spriteKeyImg, 350, 210)
+    drawImage(spriteTriImg, 410, 215)
+    drawLabel("To go to the next dungeon", 150, 280, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("go to the newly opened door and press space.", 150, 300, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawImage(tileDoorClose, 300, 270)
+    drawLine(370, 300, 415, 300, fill='white', 
+        lineWidth=2, dashes=True, opacity=100,
+         arrowStart=False, arrowEnd=True)
+    drawImage(tileDoorOpen, 420, 270)
     
 def redrawAll(app):
     if app.gameStarted:
@@ -2053,8 +2118,12 @@ def redrawAll(app):
             dragDrawEnemy(app, enemyDrag, dragCx, dragCy)
         drawAllEnemies(app)
 
+    elif app.help:
+        drawHelpScreen(app)
+
     else:
         drawStartingScreen(app)
+        drawHelpLabel(app)
         if app.changeButtonRoom:
             drawRoomMakerButton2(app)
             drawSierpinskiTriangle(app, 1, 210, 305, 100)
