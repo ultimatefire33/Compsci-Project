@@ -1389,8 +1389,8 @@ def onKeyHold(app, keys):
                     app.soundMelee.play()
                     app.user.meleeDone = True
 
-            if 'k' in keys and app.gameStarted:
-                if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width * 2:
+            if 'space' in keys and app.gameStarted:
+                if len(app.keyNotPicked) != 0 and math.dist([app.user.cx, app.user.cy], [app.keyNotPicked[0].cx, app.keyNotPicked[0].cy]) < app.user.width:
                     app.keys.append(app.keyNotPicked[0])
                     app.soundOpenDoor.play()
                     app.keyNotPicked[0].taken = True
@@ -1399,13 +1399,13 @@ def onKeyHold(app, keys):
             if 'space' in keys and app.gameStarted:
                 goNewRoom(app)
 
-            if 'h' in keys and app.hearts != [] and app.gameStarted:
-                if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width * 2:
+            if 'space' in keys and app.hearts != [] and app.gameStarted:
+                if math.dist([app.user.cx, app.user.cy], [app.hearts[0].cx, app.hearts[0].cy]) < app.user.width:
                     app.user.health = 5
                     app.soundGetHeart.play()
                     app.hearts = []
 
-            if 't' in keys and app.triforcePieces != []:
+            if 'space' in keys and app.triforcePieces != []:
                 if math.dist([app.user.cx, app.user.cy], [app.triforcePieces[0].cx, app.triforcePieces[0].cy]) < app.user.width * 2:
                     app.triforcePieces = []
                     app.gameWon = True
@@ -2010,7 +2010,7 @@ def drawHelpScreen(app):
     drawImage(spriteFireball, 290, 90)
     drawLabel("To melee, press g.", 150, 170, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     drawImage(spriteMeleeImg, 290, 150)
-    drawLabel("Press k, h, or t to grab a key/heart/triforce.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
+    drawLabel("Press space to grab a heart, key, and triforce piece.", 150, 230, font = "The Wild Breath of Zelda", fill = "yellow", bold = True, size = 13)
     drawImage(spriteHeartImg, 290, 210)
     drawImage(spriteKeyImg, 350, 210)
     drawImage(spriteTriImg, 410, 215)
